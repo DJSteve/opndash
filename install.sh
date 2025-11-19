@@ -195,6 +195,7 @@ dependencies=(
 "libtool"
 "autoconf"
 "ffmpeg"
+"qtbase5-private-dev"
 )
 
 
