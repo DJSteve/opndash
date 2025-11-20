@@ -70,3 +70,7 @@ plugins/vehicle/*
 !plugins/vehicle/README.md
 
 bluez*/
+qtserialbus/
+aasdk/
+pulseaudio/
+qt-gstreamer/
