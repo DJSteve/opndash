@@ -9,6 +9,10 @@
 #include "app/utilities/icon_engine.hpp"
 #include "app/widgets/dialog.hpp"
 
+//bt test
+#include <QTabWidget>
+#include <QTimer>
+
 #include "app/window.hpp"
 
 Dash::NavRail::NavRail()
@@ -353,11 +357,41 @@ QWidget *Dash::control_bar() const
 
     layout->addStretch();
 
-auto bluetooth = new QPushButton();
-bluetooth->setFlat(true);
-bluetooth->setToolTip("Bluetooth");
-this->arbiter.forge().iconize("bluetooth_searching", bluetooth, 26);
-layout->addWidget(bluetooth);
+    auto bluetooth = new QPushButton();
+    bluetooth->setFlat(true);
+    bluetooth->setToolTip("Bluetooth");
+    this->arbiter.forge().iconize("bluetooth_searching", bluetooth, 26);
+    layout->addWidget(bluetooth);
+
+connect(bluetooth, &QPushButton::clicked, [this]{
+    Page *settingsPage = nullptr;
+
+    // Settings page is Page(..., "Settings", "tune", ...)
+    for (auto p : this->arbiter.layout().pages()) {
+        if (p && p->name() == "Settings") {
+            settingsPage = p;
+            break;
+        }
+    }
+    if (!settingsPage) return;
+
+    auto dash = const_cast<Dash*>(this);
+    dash->set_page(settingsPage);
+
+    // After the page is shown, switch to the Bluetooth tab
+    QTimer::singleShot(0, dash, [settingsPage]{
+        auto tabs = qobject_cast<QTabWidget*>(settingsPage->container());
+        if (!tabs) return;
+
+        for (int i = 0; i < tabs->count(); ++i) {
+            if (tabs->tabText(i).compare("Bluetooth", Qt::CaseInsensitive) == 0) {
+                tabs->setCurrentIndex(i);
+                break;
+            }
+        }
+    });
+});
+
 
     auto dialog = new Dialog(this->arbiter, true, this->arbiter.window());
     dialog->set_title("Power Off");
