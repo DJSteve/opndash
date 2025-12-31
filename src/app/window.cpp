@@ -388,15 +388,16 @@ bluetooth->setStyleSheet(R"(
     }
 
     /* Scanning = brighter “active” glow */
-    QPushButton#ControlBluetooth[bt_state="scanning"] {
-        border: 1px solid rgba(255, 200, 255, 160);
-        background: qradialgradient(
-            cx:0.5, cy:0.5, radius:0.95,
-            stop:0 rgba(210, 160, 255, 190),
-            stop:0.55 rgba(120, 60, 220, 120),
-            stop:1 rgba(0, 0, 0, 0)
-        );
-    }
+QPushButton#ControlBluetooth[bt_state="scanning"] {
+    border: 2px solid rgba(255, 210, 255, 200);
+    background: qlineargradient(
+        x1:0, y1:0,
+        x2:1, y2:0,
+        stop:0 rgba(210, 160, 255, 40),
+        stop:0.5 rgba(210, 160, 255, 170),
+        stop:1 rgba(210, 160, 255, 40)
+    );
+}
 )");
 auto scanning = std::make_shared<bool>(false);
 
