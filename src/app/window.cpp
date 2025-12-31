@@ -362,12 +362,6 @@ QWidget *Dash::control_bar() const
     layout->addWidget(shutdown);
     connect(shutdown, &QPushButton::clicked, [dialog]{ dialog->open(); });
 
-    auto exit = new QPushButton();
-    exit->setFlat(true);
-    this->arbiter.forge().iconize("close", exit, 26);
-    layout->addWidget(exit);
-    connect(exit, &QPushButton::clicked, []{ qApp->exit(); });
-
     widget->setVisible(this->arbiter.layout().control_bar.enabled);
     connect(&this->arbiter, &Arbiter::control_bar_changed, [widget](bool enabled){
         widget->setVisible(enabled);
