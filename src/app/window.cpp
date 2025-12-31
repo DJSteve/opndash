@@ -353,6 +353,12 @@ QWidget *Dash::control_bar() const
 
     layout->addStretch();
 
+auto bluetooth = new QPushButton();
+bluetooth->setFlat(true);
+bluetooth->setToolTip("Bluetooth");
+this->arbiter.forge().iconize("bluetooth_searching", bluetooth, 26);
+layout->addWidget(bluetooth);
+
     auto dialog = new Dialog(this->arbiter, true, this->arbiter.window());
     dialog->set_title("Power Off");
     dialog->set_body(this->power_control());
