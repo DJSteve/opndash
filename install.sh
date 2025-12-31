@@ -1,4 +1,4 @@
-#!/bin/bash
+7#!/bin/bash
 
 #repo addresses
 aasdkRepo="https://github.com/OpenDsh/aasdk"
@@ -545,50 +545,50 @@ else
 	echo -e Skipping Gstreamer'\n'
 fi
 
-#if [ $qtserialbus = false ]; then
-#  echo -e skipping qtserialbus dependencies '\n'
-#else
-#  echo Installing qtserialbus dependencies
-#
- #change to project root
-#  cd $script_path
+if [ $qtserialbus = false ]; then
+  echo -e skipping qtserialbus dependencies '\n'
+else
+  echo Installing qtserialbus dependencies
 
-#  git clone --branch v5.15.2 $qtserialbusRepo
+#change to project root
+  cd $script_path
 
-#  cd qtserialbus
+  git clone --branch v5.15.2 $qtserialbusRepo
 
-#  mkdir build && cd build
+  cd qtserialbus
 
-#  echo Beginning qmake for qtserialbus
-#  qmake ../
+  mkdir build && cd build
 
-#  if [[ $? -eq 0 ]]; then
-#    echo -e qtserialbus qmake OK'\n'
-#  else
-#    echo qtserialbus qmake failed with error code $?
-#    exit 1
-#  fi
+  echo Beginning qmake for qtserialbus
+  qmake ../
 
-#  echo Beginning make for qtserialbus
-#  make
-#  if [[ $? -eq 0 ]]; then
-#    echo -e qtserialbus make OK'\n'
-#  else
-#    echo qtserialbus make failed with error code $?
-#    exit 1
-#  fi
+  if [[ $? -eq 0 ]]; then
+    echo -e qtserialbus qmake OK'\n'
+  else
+    echo qtserialbus qmake failed with error code $?
+    exit 1
+  fi
 
-#  echo Beginning make install for qtserialbus
-#  sudo make install
-#  if [[ $? -eq 0 ]]; then
-#    echo -e qtserialbus installed ok'\n'
-#  else
-#    echo qtserialbus make install failed with error code $?
-#    exit 1
-#  fi
+  echo Beginning make for qtserialbus
+  make
+  if [[ $? -eq 0 ]]; then
+    echo -e qtserialbus make OK'\n'
+  else
+    echo qtserialbus make failed with error code $?
+    exit 1
+  fi
 
-#  cd $script_path
-#fi
+  echo Beginning make install for qtserialbus
+  sudo make install
+  if [[ $? -eq 0 ]]; then
+    echo -e qtserialbus installed ok'\n'
+  else
+    echo qtserialbus make install failed with error code $?
+    exit 1
+  fi
+
+  cd $script_path
+fi
 
 ###############################  openauto  #########################
 if [ $openauto = false ]; then
