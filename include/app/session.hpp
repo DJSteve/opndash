@@ -164,8 +164,6 @@ class Session {
         void iconize(QString name, QString alt_name, QAbstractButton *button, uint8_t size) const;
         void iconize(QIcon &icon, QAbstractButton *button, uint8_t size) const;
         QFont font(int size, bool mono = false) const;
-        //QWidget *brightness_slider(bool buttons = true) const;
-        //QWidget *volume_slider(bool buttons = true) const;
 	QWidget *brightness_slider(Qt::Orientation orientation = Qt::Horizontal, bool buttons = true) const;
 	QWidget *volume_slider(Qt::Orientation orientation = Qt::Horizontal, bool buttons = true) const;
 

@@ -10,6 +10,7 @@
 #include <QSize>
 #include <QSlider>
 #include <QTextStream>
+#include <QSizePolicy>
 
 #include "app/arbiter.hpp"
 #include "app/pages/camera.hpp"
@@ -304,11 +305,9 @@ QFont Session::Forge::font(int size, bool mono) const
     return QFont(name, scaled);
 }
 
-//QWidget *Session::Forge::brightness_slider(bool buttons) const
 QWidget *Session::Forge::brightness_slider(Qt::Orientation orientation, bool buttons) const
 {
     auto widget = new QWidget();
-    //auto layout = new QHBoxLayout(widget);
     QBoxLayout *layout = (orientation == Qt::Horizontal)
     ? static_cast<QBoxLayout*>(new QHBoxLayout(widget))
     : static_cast<QBoxLayout*>(new QVBoxLayout(widget));
@@ -317,6 +316,38 @@ QWidget *Session::Forge::brightness_slider(Qt::Orientation orientation, bool but
     layout->setSpacing(0);
 
     auto slider = new QSlider(orientation);
+
+    // Prevent collapse when used in tight/narrow layouts (like the nav rail)
+    slider->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+    if (orientation == Qt::Vertical) {
+    	slider->setMinimumHeight(250);  // rail-friendly travel
+    	slider->setMinimumWidth(50);    // thumb-friendly
+
+	slider->setStyleSheet(R"(
+        QSlider::groove:vertical {
+            width: 10px;
+            border-radius: 5px;
+            background: rgba(0,0,0,80);
+            margin: 6px 0;
+        }
+        QSlider::sub-page:vertical {
+            border-radius: 5px;
+            background: rgba(255,0,255,120);
+        }
+        QSlider::add-page:vertical {
+            border-radius: 5px;
+            background: rgba(0,0,0,40);
+        }
+        QSlider::handle:vertical {
+            height: 26px;
+            margin: -8px;
+            border-radius: 10px;
+            background: rgba(255,0,255,180);
+            border: 1px solid rgba(200,140,255,120);
+        }
+    )");
+    }
     slider->setTracking(false);
     slider->setRange(76, 255);
     slider->setValue(this->arbiter_.system().brightness.value);
@@ -325,20 +356,6 @@ QWidget *Session::Forge::brightness_slider(Qt::Orientation orientation, bool but
     });
     QObject::connect(&this->arbiter_, &Arbiter::brightness_changed, [slider](int brightness){ slider->setValue(brightness); });
 
-    //if (buttons) {
-    //    auto dim_button = new QPushButton();
-    //    dim_button->setFlat(true);
-    //    this->iconize("brightness_low", dim_button, 26);
-    //    QObject::connect(dim_button, &QPushButton::clicked, [this]{ this->arbiter_.decrease_brightness(18); });
-
-    //    auto brighten_button = new QPushButton();
-    //    brighten_button->setFlat(true);
-    //    this->iconize("brightness_high", brighten_button, 26);
-    //    QObject::connect(brighten_button, &QPushButton::clicked, [this]{ this->arbiter_.increase_brightness(18); });
-
-    //    layout->addWidget(dim_button);
-    //    layout->addWidget(brighten_button);
-    //}
     if (buttons) {
     auto dim_button = new QPushButton();
     dim_button->setFlat(true);
@@ -355,24 +372,21 @@ QWidget *Session::Forge::brightness_slider(Qt::Orientation orientation, bool but
         layout->addWidget(brighten_button);
         layout->insertWidget(1, slider, 4);
     } else {
-        layout->addWidget(brighten_button);
-        layout->addWidget(slider, 4);
-        layout->addWidget(dim_button);
+        layout->addWidget(brighten_button, 0, Qt::AlignHCenter);
+        layout->addWidget(slider, 1);
+        layout->addWidget(dim_button, 0, Qt::AlignHCenter);
     }
     } else {
     layout->addWidget(slider, 4);
     }
 
-    //layout->insertWidget(1, slider, 4);
 
     return widget;
 }
 
-//QWidget *Session::Forge::volume_slider(bool buttons) const
 QWidget *Session::Forge::volume_slider(Qt::Orientation orientation, bool buttons) const
 {
     auto widget = new QWidget();
-    //auto layout = new QHBoxLayout(widget);
     QBoxLayout *layout = (orientation == Qt::Horizontal)
     ? static_cast<QBoxLayout*>(new QHBoxLayout(widget))
     : static_cast<QBoxLayout*>(new QVBoxLayout(widget));
@@ -380,8 +394,14 @@ QWidget *Session::Forge::volume_slider(Qt::Orientation orientation, bool buttons
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
 
-    //auto slider = new QSlider(Qt::Orientation::Horizontal);
     auto slider = new QSlider(orientation);
+    // Prevent collapse when used in tight/narrow layouts (like the nav rail)
+    slider->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+
+    if (orientation == Qt::Vertical) {
+    	slider->setMinimumHeight(250);  // rail-friendly travel
+    	slider->setMinimumWidth(50);    // thumb-friendly
+    }
     slider->setTracking(false);
     slider->setRange(0, 100);
     slider->setValue(this->arbiter_.system().volume);
@@ -404,30 +424,13 @@ QWidget *Session::Forge::volume_slider(Qt::Orientation orientation, bool buttons
         layout->addWidget(raise_button);
         layout->insertWidget(1, slider, 4);
     } else {
-        layout->addWidget(raise_button);
-        layout->addWidget(slider, 4);
-        layout->addWidget(lower_button);
+        layout->addWidget(raise_button, 0, Qt::AlignHCenter);
+        layout->addWidget(slider, 1);
+        layout->addWidget(lower_button, 0, Qt::AlignHCenter);
     }
     } else {
     layout->addWidget(slider, 4);
     }
-
-    //if (buttons) {
-    //    auto lower_button = new QPushButton();
-    //    lower_button->setFlat(true);
-    //    this->iconize("volume_down", lower_button, 26);
-    //    QObject::connect(lower_button, &QPushButton::clicked, [this]{ this->arbiter_.decrease_volume(10); });
-
-    //    auto raise_button = new QPushButton();
-    //    raise_button->setFlat(true);
-    //    this->iconize("volume_up", raise_button, 26);
-    //    QObject::connect(raise_button, &QPushButton::clicked, [this]{ this->arbiter_.increase_volume(10); });
-
-    //    layout->addWidget(lower_button);
-    //    layout->addWidget(raise_button);
-    //}
-
-    //layout->insertWidget(1, slider, 4);
 
     return widget;
 }

@@ -1,4 +1,6 @@
 #include <QHBoxLayout>
+#include <QVBoxLayout>
+#include <Qt>
 
 #include "app/arbiter.hpp"
 
@@ -29,10 +31,22 @@ VolumeQuickView::VolumeQuickView(Arbiter &arbiter)
 
 void VolumeQuickView::init()
 {
-    auto layout = new QHBoxLayout(this);
-    layout->setContentsMargins(0, 0, 0, 0);
+//    auto layout = new QHBoxLayout(this);
+//    layout->setContentsMargins(0, 0, 0, 0);
 
-    layout->addWidget(this->arbiter.forge().volume_slider());
+//    layout->addWidget(this->arbiter.forge().volume_slider());
+
+    auto w = this->widget();
+
+    auto layout = new QVBoxLayout(w);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(6);
+
+    auto vol = this->arbiter.forge().volume_slider(Qt::Vertical, true);
+    w->setMinimumHeight(240);
+    w->setMinimumWidth(64);
+
+    layout->addWidget(vol, 1, Qt::AlignHCenter);
 }
 
 BrightnessQuickView::BrightnessQuickView(Arbiter &arbiter)
@@ -43,8 +57,20 @@ BrightnessQuickView::BrightnessQuickView(Arbiter &arbiter)
 
 void BrightnessQuickView::init()
 {
-    auto layout = new QHBoxLayout(this);
-    layout->setContentsMargins(0, 0, 0, 0);
+//    auto layout = new QHBoxLayout(this);
+//    layout->setContentsMargins(0, 0, 0, 0);
 
-    layout->addWidget(this->arbiter.forge().brightness_slider());
+//    layout->addWidget(this->arbiter.forge().brightness_slider());
+
+    auto w = this->widget();
+
+    auto layout = new QVBoxLayout(w);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(6);
+
+    auto bri = this->arbiter.forge().brightness_slider(Qt::Vertical, true);
+    w->setMinimumHeight(240);
+    w->setMinimumWidth(64);
+
+    layout->addWidget(bri, 1, Qt::AlignHCenter);
 }
