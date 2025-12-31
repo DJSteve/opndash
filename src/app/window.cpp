@@ -9,11 +9,13 @@
 #include "app/utilities/icon_engine.hpp"
 #include "app/widgets/dialog.hpp"
 
-//bt test
+//Bluetooth Required Includes
 #include <QTabWidget>
 #include <QTimer>
 #include <QToolTip>
-
+//Include needed for PI5 Cpu temp
+#include <QLabel>
+#include <QFile>
 
 #include "app/window.hpp"
 
@@ -356,6 +358,56 @@ QWidget *Dash::control_bar() const
     connect(&this->arbiter, &Arbiter::curr_quick_view_changed, [quick_views](QuickView *quick_view){
         quick_views->setCurrentWidget(quick_view->widget());
     });
+auto cpuTemp = new QLabel("--.-°C");
+cpuTemp->setObjectName("CpuTemp");
+cpuTemp->setAlignment(Qt::AlignVCenter | Qt::AlignRight);
+cpuTemp->setMinimumWidth(70); // enough for "59.2°C"
+cpuTemp->setStyleSheet(R"(
+    QLabel#CpuTemp {
+        color: rgba(230, 200, 255, 210);
+        font-size: 12px;
+        padding-right: 8px;
+    }
+)");
+layout->addWidget(cpuTemp, 0);
+
+auto read_cpu_temp_c = []() -> double {
+    QFile f("/sys/class/thermal/thermal_zone0/temp");
+    if (!f.open(QIODevice::ReadOnly | QIODevice::Text))
+        return -1.0;
+
+    const QByteArray raw = f.readAll().trimmed();
+    bool ok = false;
+    const long v = raw.toLong(&ok);
+    if (!ok) return -1.0;
+
+    // Most kernels report millidegrees C
+    if (v > 1000) return v / 1000.0;
+    return static_cast<double>(v);
+};
+
+auto tempTimer = new QTimer(cpuTemp);
+tempTimer->setInterval(2000); // 1s update; change to 2000 if you prefer
+connect(tempTimer, &QTimer::timeout, cpuTemp, [cpuTemp, read_cpu_temp_c]{
+    const double t = read_cpu_temp_c();
+    if (t < 0.0) {
+        cpuTemp->setText("--.-°C");
+        return;
+    }
+    cpuTemp->setText(QString::asprintf("%.1f°C", t));
+});
+tempTimer->start();
+
+// Run once immediately so it shows on boot without waiting 1s
+QTimer::singleShot(0, cpuTemp, [cpuTemp, read_cpu_temp_c]{
+    const double t = read_cpu_temp_c();
+    if (t < 0.0) {
+        cpuTemp->setText("--.-°C");
+        return;
+    }
+    cpuTemp->setText(QString::asprintf("%.1f°C", t));
+});
+
 
     layout->addStretch();
 
