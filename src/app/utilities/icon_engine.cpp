@@ -45,17 +45,41 @@ void IconEngine::addFile(const QString &file, const QSize &size, QIcon::Mode mod
 }
 
 
+//void IconEngine::paint(QPainter *painter, const QRect &rect, QIcon::Mode mode, QIcon::State state)
+//{
+//    QSvgRenderer r(((state == QIcon::On) && !this->alt_icon.isNull()) ? this->alt_icon : this->icon);
+
+//    QPixmap output(rect.size());
+
+//    r.render(painter);
+//    painter->setCompositionMode(QPainter::CompositionMode_SourceIn);
+//    painter->setPen(Qt::NoPen);
+//    this->init_painter(painter, mode, state);
+//    painter->drawRect(output.rect());
+//}
+
 void IconEngine::paint(QPainter *painter, const QRect &rect, QIcon::Mode mode, QIcon::State state)
 {
     QSvgRenderer r(((state == QIcon::On) && !this->alt_icon.isNull()) ? this->alt_icon : this->icon);
 
-    QPixmap output(rect.size());
+    painter->save();
 
-    r.render(painter);
+    // Render SVG normally into the target rect
+    r.render(painter, rect);
+
+    // If colorize is false, keep the SVG’s original colours
+    if (!this->colorize) {
+        painter->restore();
+        return;
+    }
+
+    // Otherwise, tint as before
     painter->setCompositionMode(QPainter::CompositionMode_SourceIn);
     painter->setPen(Qt::NoPen);
     this->init_painter(painter, mode, state);
-    painter->drawRect(output.rect());
+    painter->drawRect(rect);
+
+    painter->restore();
 }
 
 QIconEngine *IconEngine::clone() const

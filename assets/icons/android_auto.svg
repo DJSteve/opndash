@@ -1,4 +1,37 @@
-<svg xmlns="http://www.w3.org/2000/svg" height="24" width="24" viewBox="0 0 24 24">
-    <path fill="none" d="M0 0h24v24H0z"/>
-    <path d="M12,8.17l7.66,13.51l-0.45,0.45L12,19.43l-7.21,2.7l-0.45-0.45L12,8.17z M21.73,17.41l-8.56-14.87C12.94,2.14,12.5,1.87,12,1.87c-0.5,0-0.94,0.27-1.17,0.68L2.27,17.41c-0.12,0.2-0.18,0.43-0.18,0.67c0,0.75,0.6,1.35,1.35,1.35h0.47L10.71,7.44L12,5.16l1.29,2.28l6.8,12h0.47c0.75,0,1.35-0.6,1.35-1.35C21.91,17.84,21.85,17.6,21.73,17.41z"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+
+  <defs>
+    <linearGradient id="pb" x1="3" y1="3" x2="21" y2="21" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2B6CFF"/>
+      <stop offset="1" stop-color="#B200FF"/>
+    </linearGradient>
+    <linearGradient id="pb2" x1="21" y1="3" x2="3" y2="21" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#00D5FF"/>
+      <stop offset="1" stop-color="#8A2BFF"/>
+    </linearGradient>
+    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="0.7" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+
+  <path d="M7 5h10l3 7-3 7H7l-3-7z" fill="#0B0E1C"/>
+  <path d="M7.6 6.4h8.8l2.1 5.6-2.1 5.6H7.6L5.5 12z" fill="#10163A"/>
+  <path d="M7 5h10l3 7-3 7H7l-3-7z" fill="none" stroke="url(#pb)" stroke-width="0.9" opacity="0.95"/>
+
+
+  <circle cx="6.2" cy="7.2" r="0.45" fill="#2B6CFF" opacity="0.9"/>
+  <circle cx="17.8" cy="7.2" r="0.45" fill="#B200FF" opacity="0.9"/>
+  <circle cx="6.2" cy="16.8" r="0.45" fill="#00D5FF" opacity="0.9"/>
+  <circle cx="17.8" cy="16.8" r="0.45" fill="#8A2BFF" opacity="0.9"/>
+
+  <path d="M8.2 15.6c-1.7 0-3-1.3-3-3 0-1.2.7-2.3 1.7-2.8l1-1.8c.2-.4.6-.7 1.1-.7h6c.5 0 .9.3 1.1.7l1 1.8c1 .5 1.7 1.6 1.7 2.8 0 1.7-1.3 3-3 3H8.2z"
+        fill="url(#pb2)" filter="url(#softGlow)"/>
+  <circle cx="9.0" cy="12.4" r="0.85" fill="#0B0E1C"/>
+  <circle cx="15.0" cy="12.4" r="0.85" fill="#0B0E1C"/>
+  <path d="M9.2 9.1h5.6" stroke="#0B0E1C" stroke-width="0.9" stroke-linecap="round" opacity="0.75"/>
 </svg>

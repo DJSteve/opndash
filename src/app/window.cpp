@@ -1,6 +1,9 @@
 #include <QHBoxLayout>
 #include <QLocale>
 #include <QPushButton>
+#include <QGraphicsOpacityEffect>
+#include <QPropertyAnimation>
+#include <QEasingCurve>
 
 #include "app/quick_views/quick_view.hpp"
 #include "app/utilities/icon_engine.hpp"
@@ -11,8 +14,13 @@
 Dash::NavRail::NavRail()
     : group()
     , timer()
-    , layout(new QVBoxLayout())
+    , widget(new QWidget())
+    , layout(new QVBoxLayout(widget))
 {
+    this->widget->setObjectName("NavRail");
+    this->widget->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+    this->widget->setMinimumWidth(64);  // tweak later, but ensures it stays visible
+
     this->layout->setContentsMargins(0, 0, 0, 0);
     this->layout->setSpacing(0);
 }
@@ -29,15 +37,34 @@ Dash::Body::Body()
     this->status_bar->setContentsMargins(0, 0, 0, 0);
     this->layout->addLayout(this->status_bar);
 
-    this->frame->setContentsMargins(0, 0, 0, 0);
-    this->layout->addLayout(this->frame, 1);
+// Frame widget that will actually paint the background
+this->frame_widget = new QWidget();
+this->frame_widget->setObjectName("DashFrame");
+
+// Put the stacked layout onto that widget
+this->frame = new QStackedLayout(this->frame_widget);
+this->frame->setContentsMargins(0, 0, 0, 0);
+
+// Add the widget (not the layout) to the main layout
+this->layout->addWidget(this->frame_widget, 1);
+
+//    this->frame->setContentsMargins(0, 0, 0, 0);
+//    this->layout->addLayout(this->frame, 1);
 
     auto msg_ref = new QWidget();
     msg_ref->setObjectName("MsgRef");
     this->layout->addWidget(msg_ref);
 
-    this->control_bar->setContentsMargins(0, 0, 0, 0);
-    this->layout->addLayout(this->control_bar);
+this->control_bar_widget = new QWidget();
+this->control_bar_widget->setObjectName("ControlBar");
+
+this->control_bar = new QVBoxLayout(this->control_bar_widget);
+this->control_bar->setContentsMargins(0, 0, 0, 0);
+
+this->layout->addWidget(this->control_bar_widget);
+
+//    this->control_bar->setContentsMargins(0, 0, 0, 0);
+//    this->layout->addLayout(this->control_bar);
 }
 
 Dash::Dash(Arbiter &arbiter)
@@ -50,7 +77,7 @@ Dash::Dash(Arbiter &arbiter)
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
 
-    layout->addLayout(this->rail.layout);
+    layout->addWidget(this->rail.widget);
     layout->addLayout(this->body.layout);
 
     connect(&this->rail.group, QOverload<int>::of(&QButtonGroup::buttonPressed), [this](int id){
@@ -75,12 +102,114 @@ Dash::Dash(Arbiter &arbiter)
 
 void Dash::init()
 {
+    // ---- Safe page transition overlay (does not touch page widgets / OpenGL) ----
+    if (!this->transition_overlay) {
+        this->transition_overlay = new QWidget(this->body.frame_widget);
+        this->transition_overlay->setObjectName("TransitionOverlay");
+        this->transition_overlay->setAttribute(Qt::WA_TransparentForMouseEvents, true);
+        this->transition_overlay->setGeometry(this->body.frame_widget->rect());
+        this->transition_overlay->raise();
+        this->transition_overlay->hide();
+
+        // Dark purple cover to mask page switch
+	this->transition_overlay->setStyleSheet(R"(
+	    background: qradialgradient(
+	        cx:0.5, cy:0.5, radius:0.9,
+	        stop:0 rgba(180, 120, 255, 220),
+	        stop:0.4 rgba(90, 40, 200, 200),
+	        stop:0.75 rgba(20, 10, 60, 230),
+	        stop:1 rgba(10, 8, 20, 255)
+	    );
+	)");
+
+        this->transition_fx = new QGraphicsOpacityEffect(this->transition_overlay);
+        this->transition_overlay->setGraphicsEffect(this->transition_fx);
+        this->transition_fx->setOpacity(0.0);
+
+        this->transition_anim = new QPropertyAnimation(this->transition_fx, "opacity", this);
+        this->transition_anim->setEasingCurve(QEasingCurve::OutExpo);
+        this->transition_anim->setDuration(160);
+    }
+
+
+
     this->body.status_bar->addWidget(this->status_bar());
+
+this->body.frame_widget->setAttribute(Qt::WA_StyledBackground, true);
+this->body.frame_widget->setStyleSheet(R"(
+    #DashFrame {
+        background: qlineargradient(
+            x1:0, y1:0,
+            x2:0, y2:1,
+            stop:0 #070814,
+            stop:0.45 #1A1A5E,
+            stop:1 #4B118A
+        );
+    }
+)");
+
+this->rail.widget->setAttribute(Qt::WA_StyledBackground, true);
+this->rail.widget->setStyleSheet(R"(
+    #NavRail {
+        background: qlineargradient(
+            x1:0, y1:0,
+            x2:0, y2:1,
+            stop:0 #0D0E28,
+            stop:1 #5A189A
+        );
+        border-right: 1px solid rgba(0, 0, 0, 180);          /* shadow edge */
+        border-left: 1px solid rgba(220, 170, 255, 100);      /* highlight edge */
+    }
+
+    /* All nav buttons */
+    #NavRail QPushButton {
+        background: transparent;
+        border: 0px;
+        margin: 6px 4px;
+        padding: 6px;
+        border-radius: 10px;
+    }
+
+    #NavRail QPushButton:checked {
+        background: qradialgradient(
+            cx:0.5, cy:0.5, radius:0.9,
+            stop:0 rgba(190, 130, 255, 200),
+            stop:0.5 rgba(120, 60, 220, 120),
+            stop:1 rgba(0, 0, 0, 0)
+        );
+    }
+
+    /* Optional: press feedback */
+    #NavRail QPushButton:pressed {
+        background: rgba(200, 140, 255, 80);
+    }
+
+)");
+
+this->body.control_bar_widget->setFixedHeight(56);
+
+this->body.control_bar_widget->setAttribute(Qt::WA_StyledBackground, true);
+this->body.control_bar_widget->setStyleSheet(R"(
+    #ControlBar {
+        background: qlineargradient(
+            x1:0, y1:0,
+            x2:0, y2:1,
+            stop:0 #4B118A,
+            stop:1 #2D0F55
+        );
+        border-top: 1px solid rgba(200, 140, 255, 60);
+    }
+)");
 
     for (auto page : this->arbiter.layout().pages()) {
         auto button = page->button();
         button->setCheckable(true);
         button->setFlat(true);
+
+	button->setMinimumSize(56, 56);
+	button->setMaximumSize(56, 56);
+	button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+
         QIcon icon(new StylizedIconEngine(this->arbiter, QString(":/icons/%1.svg").arg(page->icon_name()), true));
         this->arbiter.forge().iconize(icon, button, 32);
 
@@ -99,14 +228,88 @@ void Dash::init()
 void Dash::set_page(Page *page)
 {
     auto id = this->arbiter.layout().page_id(page);
-    this->rail.group.button(id)->setChecked(true);
-    this->body.frame->setCurrentWidget(page->container());
+    if (auto b = this->rail.group.button(id))
+        b->setChecked(true);
+
+    QWidget *target = page->container();
+    QWidget *current = this->body.frame->currentWidget();
+    if (current == target)
+        return;
+
+    // If transition system isn't ready, just switch
+    if (!this->transition_overlay || !this->transition_fx || !this->transition_anim) {
+        this->body.frame->setCurrentWidget(target);
+        return;
+    }
+
+    // Queue if we are mid-transition
+    if (this->transitioning) {
+        this->pending_page = page;
+        return;
+    }
+
+    this->transitioning = true;
+    this->pending_page = nullptr;
+
+    // Ensure overlay covers the frame (handles fullscreen/resizes)
+    this->transition_overlay->setGeometry(this->body.frame_widget->rect());
+    this->transition_overlay->show();
+    this->transition_overlay->raise();
+
+    // Stop any previous run cleanly
+    this->transition_anim->stop();
+    QObject::disconnect(this->transition_anim, nullptr, nullptr, nullptr);
+
+    // Phase 1: fade overlay IN to cover
+    this->transition_anim->setStartValue(0.0);
+    this->transition_anim->setEndValue(1.0);
+
+    QObject::connect(this->transition_anim, &QPropertyAnimation::finished, this, [this, page]() {
+        // Switch while fully covered (no ghosting / no OpenGL effect crashes)
+        this->body.frame->setCurrentWidget(page->container());
+
+        // Phase 2: fade overlay OUT to reveal
+        this->transition_anim->stop();
+        QObject::disconnect(this->transition_anim, nullptr, nullptr, nullptr);
+        this->transition_anim->setStartValue(1.0);
+        this->transition_anim->setEndValue(0.0);
+
+        QObject::connect(this->transition_anim, &QPropertyAnimation::finished, this, [this]() {
+            this->transition_overlay->hide();
+            this->transitioning = false;
+
+            if (this->pending_page) {
+                Page *next = this->pending_page;
+                this->pending_page = nullptr;
+                this->set_page(next);
+            }
+        });
+
+        this->transition_anim->start();
+    });
+
+    this->transition_anim->start();
 }
+
+
 
 QWidget *Dash::status_bar() const
 {
     auto widget = new QWidget();
     widget->setObjectName("StatusBar");
+
+widget->setAttribute(Qt::WA_StyledBackground, true);
+widget->setStyleSheet(R"(
+    #StatusBar {
+        background: qlineargradient(
+            x1:0, y1:0,
+            x2:0, y2:1,
+            stop:0 #120A2A,
+            stop:1 #2A0A5E
+        );
+        border-top: 1px solid rgba(180, 120, 255, 60);
+    }
+)");
     auto layout = new QHBoxLayout(widget);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
@@ -223,7 +426,7 @@ MainWindow::MainWindow(QRect geometry)
     auto dash = new Dash(this->arbiter);
     this->stack->addWidget(dash);
     dash->init();
-
+//    dash->setStyleSheet("background-color: red;");
     this->arbiter.system().brightness.set();
 
     if (this->arbiter.layout().fullscreen.on_start)

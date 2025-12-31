@@ -19,8 +19,12 @@
 
 class FullscreenToggle;
 
+class QGraphicsOpacityEffect;
+class QPropertyAnimation;
+
 class Dash : public QWidget {
     Q_OBJECT
+
 
    public:
     Dash(Arbiter &arbiter);
@@ -30,8 +34,8 @@ class Dash : public QWidget {
     struct NavRail {
         QButtonGroup group;
         QElapsedTimer timer;
+	QWidget *widget;
         QVBoxLayout *layout;
-
         NavRail();
     };
 
@@ -39,7 +43,9 @@ class Dash : public QWidget {
         QVBoxLayout *layout;
         QVBoxLayout *status_bar;
         QStackedLayout *frame;
+	QWidget *control_bar_widget;
         QVBoxLayout *control_bar;
+	QWidget *frame_widget;
 
         Body();
     };
@@ -48,7 +54,15 @@ class Dash : public QWidget {
     NavRail rail;
     Body body;
 
-    void set_page(Page *page);
+    
+    // Transition overlay (safe across OpenGL/video pages)
+    QWidget *transition_overlay = nullptr;
+    QGraphicsOpacityEffect *transition_fx = nullptr;
+    QPropertyAnimation *transition_anim = nullptr;
+    bool transitioning = false;
+    Page *pending_page = nullptr;
+
+void set_page(Page *page);
     QWidget *status_bar() const;
     QWidget *control_bar() const;
     QWidget *power_control() const;

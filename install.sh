@@ -545,50 +545,50 @@ else
 	echo -e Skipping Gstreamer'\n'
 fi
 
-if [ $qtserialbus = false ]; then
-  echo -e skipping qtserialbus dependencies '\n'
-else
-  echo Installing qtserialbus dependencies
+#if [ $qtserialbus = false ]; then
+#  echo -e skipping qtserialbus dependencies '\n'
+#else
+#  echo Installing qtserialbus dependencies
+#
+ #change to project root
+#  cd $script_path
 
-  #change to project root
-  cd $script_path
+#  git clone --branch v5.15.2 $qtserialbusRepo
 
-  git clone --branch v5.15.2 $qtserialbusRepo
+#  cd qtserialbus
 
-  cd qtserialbus
+#  mkdir build && cd build
 
-  mkdir build && cd build
+#  echo Beginning qmake for qtserialbus
+#  qmake ../
 
-  echo Beginning qmake for qtserialbus
-  qmake ../
+#  if [[ $? -eq 0 ]]; then
+#    echo -e qtserialbus qmake OK'\n'
+#  else
+#    echo qtserialbus qmake failed with error code $?
+#    exit 1
+#  fi
 
-  if [[ $? -eq 0 ]]; then
-    echo -e qtserialbus qmake OK'\n'
-  else
-    echo qtserialbus qmake failed with error code $?
-    exit 1
-  fi
+#  echo Beginning make for qtserialbus
+#  make
+#  if [[ $? -eq 0 ]]; then
+#    echo -e qtserialbus make OK'\n'
+#  else
+#    echo qtserialbus make failed with error code $?
+#    exit 1
+#  fi
 
-  echo Beginning make for qtserialbus
-  make
-  if [[ $? -eq 0 ]]; then
-    echo -e qtserialbus make OK'\n'
-  else
-    echo qtserialbus make failed with error code $?
-    exit 1
-  fi
+#  echo Beginning make install for qtserialbus
+#  sudo make install
+#  if [[ $? -eq 0 ]]; then
+#    echo -e qtserialbus installed ok'\n'
+#  else
+#    echo qtserialbus make install failed with error code $?
+#    exit 1
+#  fi
 
-  echo Beginning make install for qtserialbus
-  sudo make install
-  if [[ $? -eq 0 ]]; then
-    echo -e qtserialbus installed ok'\n'
-  else
-    echo qtserialbus make install failed with error code $?
-    exit 1
-  fi
-
-  cd $script_path
-fi
+#  cd $script_path
+#fi
 
 ###############################  openauto  #########################
 if [ $openauto = false ]; then

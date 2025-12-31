@@ -34,8 +34,17 @@ void SettingsPage::init()
     this->addTab(new MainSettingsTab(this->arbiter), "Main");
     this->addTab(new LayoutSettingsTab(this->arbiter), "Layout");
     this->addTab(new BluetoothSettingsTab(this->arbiter, this), "Bluetooth");
-    this->addTab(new ActionsSettingsTab(this->arbiter), "Actions");
-    this->addTab(new AboutSettingsTab(this->arbiter), "About");
+//    this->addTab(new ActionsSettingsTab(this->arbiter), "Actions");
+//    this->addTab(new AboutSettingsTab(this->arbiter), "About");
+    QIcon icon;
+    const QString p = ":/icons/tune.svg"; // put your coloured SVG here
+    icon.addFile(p, QSize(), QIcon::Normal, QIcon::Off);
+    icon.addFile(p, QSize(), QIcon::Normal, QIcon::On);
+    icon.addFile(p, QSize(), QIcon::Active, QIcon::Off);
+    icon.addFile(p, QSize(), QIcon::Active, QIcon::On);
+    this->button()->setIcon(icon);
+
+
 }
 
 MainSettingsTab::MainSettingsTab(Arbiter &arbiter, QWidget *parent)

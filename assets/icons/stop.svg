@@ -1,4 +1,38 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-    <path fill="none" d="M0 0h24v24H0z"/>
-    <path d="M6 6h12v12H6z" />
+  <defs>
+    <linearGradient id="pbGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#2D7DFF"/>
+      <stop offset="100%" stop-color="#B000FF"/>
+    </linearGradient>
+  </defs>
+
+  <!-- perfectly centered octagon badge -->
+  <path d="
+    M12 2.5
+    L17.5 5.5
+    L21.5 12
+    L17.5 18.5
+    L12 21.5
+    L6.5 18.5
+    L2.5 12
+    L6.5 5.5
+    Z"
+    fill="#0A102A"/>
+
+  <path d="
+    M12 3.5
+    L16.8 6.1
+    L20.3 12
+    L16.8 17.9
+    L12 20.5
+    L7.2 17.9
+    L3.7 12
+    L7.2 6.1
+    Z"
+    fill="none"
+    stroke="url(#pbGrad)"
+    stroke-width="1.4"/>
+
+  <!-- inner stop square, optically centered -->
+  <rect x="8" y="8" width="8" height="8" rx="1.2" fill="url(#pbGrad)"/>
 </svg>

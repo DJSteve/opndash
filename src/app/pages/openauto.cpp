@@ -413,6 +413,54 @@ OpenAutoPage::OpenAutoPage(Arbiter &arbiter, QWidget *parent)
 {
 }
 
+//void OpenAutoPage::init()
+//{
+//    this->config = Config::get_instance();
+
+//    this->frame = new OpenAutoFrame(this);
+//
+//    std::function<void(bool)> callback = [frame = this->frame](bool active) { frame->toggle(active); };
+//    this->worker = new OpenAutoWorker(callback, this->arbiter.theme().mode == Session::Theme::Dark, frame, this->arbiter);
+
+//    connect(this->frame, &OpenAutoFrame::toggle, [this](bool enable){
+//    this->setCurrentIndex(enable ? 1 : 0);
+
+
+
+//    if (!Config::get_instance()->get_show_aa_connected())
+//        return;
+
+    // Choose which SVG to show
+//    const QString svgName = enable
+//        ? this->connected_icon_name            // e.g. "android_auto_color"
+//        : this->icon_name();                   // e.g. "android_auto" (make sure this is your coloured idle icon)
+
+//    const QString path = QString(":/icons/%1.svg").arg(svgName);
+
+    // Build icon with ALL common states so it never disappears
+//    QIcon icon;
+//    icon.addFile(path, QSize(), QIcon::Normal,   QIcon::Off);
+//    icon.addFile(path, QSize(), QIcon::Normal,   QIcon::On);
+//    icon.addFile(path, QSize(), QIcon::Active,   QIcon::Off);
+//    icon.addFile(path, QSize(), QIcon::Active,   QIcon::On);
+//    icon.addFile(path, QSize(), QIcon::Selected, QIcon::Off);
+//    icon.addFile(path, QSize(), QIcon::Selected, QIcon::On);
+//    icon.addFile(path, QSize(), QIcon::Disabled, QIcon::Off);
+//    icon.addFile(path, QSize(), QIcon::Disabled, QIcon::On);
+
+//    this->button()->setIcon(icon);
+//});
+
+
+//    AAHandler *aa_handler = this->arbiter.android_auto().handler;
+//    connect(&this->arbiter, &Arbiter::mode_changed, [this, aa_handler](Session::Theme::Mode mode){
+//        aa_handler->setNightMode(mode == Session::Theme::Dark);
+//    });
+
+//    this->addWidget(this->connect_msg());
+//    this->addWidget(this->frame);
+//}
+
 void OpenAutoPage::init()
 {
     this->config = Config::get_instance();
@@ -420,21 +468,45 @@ void OpenAutoPage::init()
     this->frame = new OpenAutoFrame(this);
 
     std::function<void(bool)> callback = [frame = this->frame](bool active) { frame->toggle(active); };
-    this->worker = new OpenAutoWorker(callback, this->arbiter.theme().mode == Session::Theme::Dark, frame, this->arbiter);
+    this->worker = new OpenAutoWorker(
+        callback,
+        this->arbiter.theme().mode == Session::Theme::Dark,
+        frame,
+        this->arbiter
+    );
 
-    connect(this->frame, &OpenAutoFrame::toggle, [this](bool enable){
+    // Helper: set the sidebar icon using untinted, true-colour SVGs (all states)
+    auto setAaIcon = [this](bool enable) {
+        if (!Config::get_instance()->get_show_aa_connected())
+            return;
+
+        const QString svgName = enable
+            ? this->connected_icon_name   // e.g. "android_auto_color"
+            : this->icon_name();          // e.g. "android_auto" (idle)
+
+        const QString path = QString(":/icons/%1.svg").arg(svgName);
+
+        QIcon icon;
+        icon.addFile(path, QSize(), QIcon::Normal,   QIcon::Off);
+        icon.addFile(path, QSize(), QIcon::Normal,   QIcon::On);
+        icon.addFile(path, QSize(), QIcon::Active,   QIcon::Off);
+        icon.addFile(path, QSize(), QIcon::Active,   QIcon::On);
+        icon.addFile(path, QSize(), QIcon::Selected, QIcon::Off);
+        icon.addFile(path, QSize(), QIcon::Selected, QIcon::On);
+        icon.addFile(path, QSize(), QIcon::Disabled, QIcon::Off);
+        icon.addFile(path, QSize(), QIcon::Disabled, QIcon::On);
+
+        this->button()->setIcon(icon);
+    };
+
+    // Force correct (untinted) icon at boot before first render (idle/offline)
+    setAaIcon(false);
+
+    connect(this->frame, &OpenAutoFrame::toggle, [this, setAaIcon](bool enable){
         this->setCurrentIndex(enable ? 1 : 0);
-
-        if (Config::get_instance()->get_show_aa_connected()) {
-            auto icon = this->button()->icon();
-            if (enable)
-                icon.addFile(QString(":/icons/%1.svg").arg(this->connected_icon_name), QSize(), QIcon::Active, QIcon::On);
-            else
-                icon.addFile(QString(":/icons/%1.svg").arg(this->icon_name()), QSize(), QIcon::Active, QIcon::Off);
-            this->button()->setIcon(icon);
-        }
+        setAaIcon(enable);
     });
-    
+
     AAHandler *aa_handler = this->arbiter.android_auto().handler;
     connect(&this->arbiter, &Arbiter::mode_changed, [this, aa_handler](Session::Theme::Mode mode){
         aa_handler->setNightMode(mode == Session::Theme::Dark);
@@ -443,6 +515,7 @@ void OpenAutoPage::init()
     this->addWidget(this->connect_msg());
     this->addWidget(this->frame);
 }
+
 
 void OpenAutoPage::resizeEvent(QResizeEvent *event)
 {

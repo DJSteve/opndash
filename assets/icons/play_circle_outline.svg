@@ -1,4 +1,35 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-    <path fill="none" d="M0 0h24v24H0V0z"/>
-    <path d="M10 16.5l6-4.5-6-4.5zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+
+  <defs>
+    <linearGradient id="pb" x1="3" y1="3" x2="21" y2="21" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2B6CFF"/>
+      <stop offset="1" stop-color="#B200FF"/>
+    </linearGradient>
+    <linearGradient id="pb2" x1="21" y1="3" x2="3" y2="21" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#00D5FF"/>
+      <stop offset="1" stop-color="#8A2BFF"/>
+    </linearGradient>
+    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="0.7" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+
+  <circle cx="12" cy="12" r="10" fill="#0B0E1C"/>
+  <circle cx="12" cy="12" r="8.7" fill="#10163A"/>
+  <circle cx="12" cy="12" r="10" fill="none" stroke="url(#pb)" stroke-width="1.2" filter="url(#softGlow)"/>
+
+
+  <circle cx="6.2" cy="7.2" r="0.45" fill="#2B6CFF" opacity="0.9"/>
+  <circle cx="17.8" cy="7.2" r="0.45" fill="#B200FF" opacity="0.9"/>
+  <circle cx="6.2" cy="16.8" r="0.45" fill="#00D5FF" opacity="0.9"/>
+  <circle cx="17.8" cy="16.8" r="0.45" fill="#8A2BFF" opacity="0.9"/>
+
+  <path d="M10.2 8.2l6.6 3.8-6.6 3.8z" fill="url(#pb2)" filter="url(#softGlow)"/>
+  <path d="M12 2.5c5.25 0 9.5 4.25 9.5 9.5S17.25 21.5 12 21.5 2.5 17.25 2.5 12 6.75 2.5 12 2.5z"
+        fill="none" stroke="url(#pb)" stroke-width="0.6" opacity="0.8"/>
 </svg>

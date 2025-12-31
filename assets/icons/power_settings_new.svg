@@ -1,4 +1,48 @@
-<svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24">
-    <path fill="none" d="M0 0h24v24H0z"/>
-    <path d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42C17.99 7.86 19 9.81 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.19 1.01-4.14 2.58-5.42L6.17 5.17C4.23 6.82 3 9.26 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <defs>
+    <linearGradient id="pb" x1="2" y1="2" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0B1026"/>
+      <stop offset="0.4" stop-color="#1E3A8A"/>
+      <stop offset="0.75" stop-color="#3B82F6"/>
+      <stop offset="1" stop-color="#B000FF"/>
+    </linearGradient>
+    <linearGradient id="bolt" x1="9" y1="4" x2="15" y2="20" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#00E5FF"/>
+      <stop offset="0.55" stop-color="#7C4DFF"/>
+      <stop offset="1" stop-color="#FF2DF7"/>
+    </linearGradient>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="1.0" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Aggressive circular badge with "boost ring" -->
+  <circle cx="12" cy="12" r="10" fill="url(#pb)"/>
+  <circle cx="12" cy="12" r="8.1" fill="#070B1A" opacity="0.86"/>
+  <path d="M12 2a10 10 0 0 1 9.4 6.5" fill="none" stroke="#00E5FF" stroke-width="1.2" stroke-linecap="round" opacity="0.9"/>
+  <path d="M2.6 14.2A10 10 0 0 0 12 22" fill="none" stroke="#B000FF" stroke-width="1.2" stroke-linecap="round" opacity="0.9"/>
+
+  <!-- Power symbol (ring + stem) with neon treatment -->
+  <g filter="url(#glow)">
+    <!-- Outer ring portion -->
+    <path d="M15.9 7.1a5.5 5.5 0 1 1-7.8 0" fill="none" stroke="url(#bolt)" stroke-width="2.1" stroke-linecap="round"/>
+    <!-- Stem -->
+    <path d="M12 5.2v6.0" fill="none" stroke="url(#bolt)" stroke-width="2.3" stroke-linecap="round"/>
+    <!-- Lightning bolt overlay (Max Power-ish) -->
+    <path d="M13.6 10.1 10.8 13.0h2.0l-2.4 3.0 5.0-4.7h-2.1l2.1-1.2z" fill="#00E5FF" opacity="0.95"/>
+  </g>
+
+  <!-- Little "flame" slash accents (subtle, still readable) -->
+  <path d="M6.2 11.6c.3-1.0 1.0-1.7 1.6-2.3-.1.9-.2 1.4.4 2.1.5.6.7 1.1.6 1.9-.8-.3-1.6-.8-2.6-1.7z" fill="#B000FF" opacity="0.65"/>
+  <path d="M17.8 12.4c-.3 1.0-1.0 1.7-1.6 2.3.1-.9.2-1.4-.4-2.1-.5-.6-.7-1.1-.6-1.9.8.3 1.6.8 2.6 1.7z" fill="#2D7DFF" opacity="0.65"/>
+
+  <!-- Rivet dots -->
+  <circle cx="6.8" cy="6.8" r="0.55" fill="#2D7DFF" opacity="0.9"/>
+  <circle cx="17.2" cy="6.8" r="0.55" fill="#B000FF" opacity="0.9"/>
+  <circle cx="6.8" cy="17.2" r="0.55" fill="#B000FF" opacity="0.9"/>
+  <circle cx="17.2" cy="17.2" r="0.55" fill="#2D7DFF" opacity="0.9"/>
 </svg>

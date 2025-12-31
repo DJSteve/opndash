@@ -36,30 +36,30 @@ class BluetoothPlayerTab : public QWidget {
     QWidget *controls_widget();
 };
 
-class RadioPlayerTab : public QWidget {
-    Q_OBJECT
+//class RadioPlayerTab : public QWidget {
+//    Q_OBJECT
 
-   public:
-    RadioPlayerTab(Arbiter &arbiter, QWidget *parent = nullptr);
-    ~RadioPlayerTab();
+//  public:
+//    RadioPlayerTab(Arbiter &arbiter, QWidget *parent = nullptr);
+//    ~RadioPlayerTab();
 
-   private:
-    static QMap<QString, QFileInfo> get_plugins();
+//   private:
+//    static QMap<QString, QFileInfo> get_plugins();
 
-    Arbiter &arbiter;
-    Config *config;
-    QMap<QString, QFileInfo> plugins;
-    QPluginLoader loader;
-    Tuner *tuner;
-    Selector *plugin_selector;
-    QPushButton *play_button;
+//    Arbiter &arbiter;
+//    Config *config;
+//    QMap<QString, QFileInfo> plugins;
+//    QPluginLoader loader;
+//    Tuner *tuner;
+//    Selector *plugin_selector;
+//    QPushButton *play_button;
 
-    void load_plugin();
-    QWidget *dialog_body();
-    QWidget *tuner_widget();
-    QWidget *controls_widget();
+//    void load_plugin();
+//    QWidget *dialog_body();
+//    QWidget *tuner_widget();
+//    QWidget *controls_widget();
 
-};
+//};
 
 class LocalPlayerTab : public QWidget {
     Q_OBJECT

@@ -1,4 +1,37 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
-    <path fill="none" d="M0 0h24v24H0z"/>
-    <path d="M14.24 12.01l2.32 2.32c.28-.72.44-1.51.44-2.33 0-.82-.16-1.59-.43-2.31l-2.33 2.32zm5.29-5.3l-1.26 1.26c.63 1.21.98 2.57.98 4.02s-.36 2.82-.98 4.02l1.2 1.2c.97-1.54 1.54-3.36 1.54-5.31-.01-1.89-.55-3.67-1.48-5.19zm-3.82 1L10 2H9v7.59L4.41 5 3 6.41 8.59 12 3 17.59 4.41 19 9 14.41V22h1l5.71-5.71-4.3-4.29 4.3-4.29zM11 5.83l1.88 1.88L11 9.59V5.83zm1.88 10.46L11 18.17v-3.76l1.88 1.88z"/>
+
+  <defs>
+    <linearGradient id="pb" x1="3" y1="3" x2="21" y2="21" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2B6CFF"/>
+      <stop offset="1" stop-color="#B200FF"/>
+    </linearGradient>
+    <linearGradient id="pb2" x1="21" y1="3" x2="3" y2="21" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#00D5FF"/>
+      <stop offset="1" stop-color="#8A2BFF"/>
+    </linearGradient>
+    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="0.7" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+
+  <circle cx="12" cy="12" r="10" fill="#0B0E1C"/>
+  <circle cx="12" cy="12" r="8.7" fill="#10163A"/>
+  <circle cx="12" cy="12" r="10" fill="none" stroke="url(#pb)" stroke-width="1.2" filter="url(#softGlow)"/>
+
+
+  <circle cx="6.2" cy="7.2" r="0.45" fill="#2B6CFF" opacity="0.9"/>
+  <circle cx="17.8" cy="7.2" r="0.45" fill="#B200FF" opacity="0.9"/>
+  <circle cx="6.2" cy="16.8" r="0.45" fill="#00D5FF" opacity="0.9"/>
+  <circle cx="17.8" cy="16.8" r="0.45" fill="#8A2BFF" opacity="0.9"/>
+
+  <path d="M12 6.2v4.0l2.4-2.0L12 6.2zm0 7.6v4.0l2.4-2.0-2.4-2.0z" fill="url(#pb2)" filter="url(#softGlow)"/>
+  <path d="M12 6.2l3.4 2.8-3.4 2.8 3.4 2.8-3.4 2.8V6.2z"
+        fill="none" stroke="url(#pb)" stroke-width="1.1" stroke-linejoin="round" filter="url(#softGlow)"/>
+  <path d="M16.6 9.2c1.6 1.4 1.6 4.2 0 5.6" fill="none" stroke="url(#pb2)" stroke-width="1.0" stroke-linecap="round" opacity="0.9"/>
+  <path d="M18.2 7.6c2.6 2.2 2.6 6.6 0 8.8" fill="none" stroke="url(#pb)" stroke-width="0.9" stroke-linecap="round" opacity="0.75"/>
 </svg>

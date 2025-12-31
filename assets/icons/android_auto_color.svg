@@ -1,13 +1,37 @@
-<svg viewBox=".333 .667 501.334 480" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
-    <linearGradient id="a" x1="-21.471%" x2="84.198%" y1="37.806%" y2="97.817%">
-        <stop offset="0" stop-color="#1a237e" stop-opacity=".2"/>
-        <stop offset="1" stop-color="#1a237e" stop-opacity=".02"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+
+  <defs>
+    <linearGradient id="pb" x1="3" y1="3" x2="21" y2="21" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#2B6CFF"/>
+      <stop offset="1" stop-color="#B200FF"/>
     </linearGradient>
-	<g fill="none" fill-rule="evenodd">
-		<path d="m32.333 416.667c-17.68 0-32-14.32-32-32 0-5.814 1.547-11.28 4.267-15.974l202.667-352c5.52-9.573 15.866-16.026 27.733-16.026s22.213 6.453 27.733 16.026l202.667 352c2.72 4.694 4.267 10.16 4.267 15.974 0 17.68-14.32 32-32 32z" fill="#03a9f4"/>
-		<path d="m235 150v266.667h266.667z" fill="url(#a)"/>
-		<path d="m207.267 16.693-202.667 352c-2.72 4.694-4.267 10.16-4.267 15.974 0 17.68 14.32 32 32 32h202.667v-416c-11.867 0-22.213 6.453-27.733 16.026z" fill="#039be5"/>
-		<path d="m235 150 181.333 320-10.666 10.667-170.667-64-170.667 64-10.666-10.667z" fill="#8d8d8d"/>
-		<path d="m235 150 181.333 320-10.666 10.667-170.667-64" fill="#7d7d7d"/>
-    </g>
+    <linearGradient id="pb2" x1="21" y1="3" x2="3" y2="21" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#00D5FF"/>
+      <stop offset="1" stop-color="#8A2BFF"/>
+    </linearGradient>
+    <filter id="softGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="0.7" result="b"/>
+      <feMerge>
+        <feMergeNode in="b"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+
+  <circle cx="12" cy="12" r="10" fill="#0B0E1C"/>
+  <circle cx="12" cy="12" r="8.7" fill="#10163A"/>
+  <circle cx="12" cy="12" r="10" fill="none" stroke="url(#pb)" stroke-width="1.2" filter="url(#softGlow)"/>
+
+
+  <circle cx="6.2" cy="7.2" r="0.45" fill="#2B6CFF" opacity="0.9"/>
+  <circle cx="17.8" cy="7.2" r="0.45" fill="#B200FF" opacity="0.9"/>
+  <circle cx="6.2" cy="16.8" r="0.45" fill="#00D5FF" opacity="0.9"/>
+  <circle cx="17.8" cy="16.8" r="0.45" fill="#8A2BFF" opacity="0.9"/>
+
+  <path d="M8.2 15.5c-1.6 0-2.9-1.3-2.9-2.9 0-1.2.7-2.2 1.6-2.7l1-1.7c.2-.4.6-.7 1.1-.7h6c.5 0 .9.3 1.1.7l1 1.7c.9.5 1.6 1.5 1.6 2.7 0 1.6-1.3 2.9-2.9 2.9H8.2z"
+        fill="url(#pb2)" filter="url(#softGlow)"/>
+  <path d="M12.7 7.2l-1.6 3h1.3l-1.1 2.6 2.3-3.3h-1.4z" fill="url(#pb)" opacity="0.95" filter="url(#softGlow)"/>
+  <circle cx="9.0" cy="12.3" r="0.85" fill="#0B0E1C"/>
+  <circle cx="15.0" cy="12.3" r="0.85" fill="#0B0E1C"/>
 </svg>
