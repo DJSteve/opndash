@@ -364,6 +364,91 @@ QWidget *Dash::control_bar() const
     bluetooth->setToolTip("Bluetooth");
     this->arbiter.forge().iconize("bluetooth_searching", bluetooth, 26);
     layout->addWidget(bluetooth);
+bluetooth->setObjectName("ControlBluetooth");
+bluetooth->setProperty("bt_state", "idle");
+
+// Base style + state styles (applies only to this button)
+bluetooth->setStyleSheet(R"(
+    QPushButton#ControlBluetooth {
+        border: 1px solid rgba(200, 140, 255, 40);
+        border-radius: 12px;
+        padding: 6px;
+        background: rgba(0, 0, 0, 0);
+    }
+
+    /* Connected = stronger purple glow */
+    QPushButton#ControlBluetooth[bt_state="connected"] {
+        border: 1px solid rgba(220, 170, 255, 130);
+        background: qradialgradient(
+            cx:0.5, cy:0.5, radius:0.9,
+            stop:0 rgba(190, 130, 255, 140),
+            stop:0.6 rgba(80, 30, 160, 70),
+            stop:1 rgba(0, 0, 0, 0)
+        );
+    }
+
+    /* Scanning = brighter “active” glow */
+    QPushButton#ControlBluetooth[bt_state="scanning"] {
+        border: 1px solid rgba(255, 200, 255, 160);
+        background: qradialgradient(
+            cx:0.5, cy:0.5, radius:0.95,
+            stop:0 rgba(210, 160, 255, 190),
+            stop:0.55 rgba(120, 60, 220, 120),
+            stop:1 rgba(0, 0, 0, 0)
+        );
+    }
+)");
+auto scanning = std::make_shared<bool>(false);
+
+auto apply_bt_state = [this, bluetooth, scanning]() {
+    // Connected if ANY known device is connected
+    bool connected = false;
+    for (auto dev : this->arbiter.system().bluetooth.get_devices()) {
+        if (dev && dev->isConnected()) { connected = true; break; }
+    }
+
+    const char *state =
+        (*scanning) ? "scanning" :
+        (connected) ? "connected" :
+                      "idle";
+
+    bluetooth->setProperty("bt_state", state);
+
+    // Force Qt to re-apply the stylesheet based on the new property
+    bluetooth->style()->unpolish(bluetooth);
+    bluetooth->style()->polish(bluetooth);
+    bluetooth->update();
+};
+
+// Initial refresh once Bluetooth service finishes init
+connect(&this->arbiter.system().bluetooth, &Bluetooth::init, bluetooth, [apply_bt_state]() {
+    apply_bt_state();
+});
+
+// Scanning status
+connect(&this->arbiter.system().bluetooth, &Bluetooth::scan_status, bluetooth, [scanning, apply_bt_state](bool status) {
+    *scanning = status;
+    apply_bt_state();
+});
+
+// Device connection changes
+connect(&this->arbiter.system().bluetooth, &Bluetooth::device_added, bluetooth, [apply_bt_state](BluezQt::DevicePtr) {
+    apply_bt_state();
+});
+connect(&this->arbiter.system().bluetooth, &Bluetooth::device_changed, bluetooth, [apply_bt_state](BluezQt::DevicePtr) {
+    apply_bt_state();
+});
+connect(&this->arbiter.system().bluetooth, &Bluetooth::device_removed, bluetooth, [apply_bt_state](BluezQt::DevicePtr) {
+    apply_bt_state();
+});
+
+// Media player device changes (also indicates a “connected media device”)
+connect(&this->arbiter.system().bluetooth, &Bluetooth::media_player_changed, bluetooth, [apply_bt_state](QString, BluezQt::MediaPlayerPtr) {
+    apply_bt_state();
+});
+
+// Run once now (best effort)
+apply_bt_state();
 
 connect(bluetooth, &QPushButton::clicked, [this]{
     Page *settingsPage = nullptr;
