@@ -364,11 +364,27 @@ QWidget *Dash::control_bar() const
     bluetooth->setToolTip("Bluetooth");
     this->arbiter.forge().iconize("bluetooth_searching", bluetooth, 26);
     layout->addWidget(bluetooth);
-bluetooth->setObjectName("ControlBluetooth");
-bluetooth->setProperty("bt_state", "idle");
+    bluetooth->setObjectName("ControlBluetooth");
+    bluetooth->setProperty("bt_state", "idle");
 
-// Base style + state styles (applies only to this button)
-bluetooth->setStyleSheet(R"(
+    bluetooth->setProperty("bt_pulse", 0);
+
+    auto pulseTimer = new QTimer(bluetooth);
+    pulseTimer->setInterval(500);  // 400–700ms feels good
+    pulseTimer->setSingleShot(false);
+
+    connect(pulseTimer, &QTimer::timeout, bluetooth, [bluetooth]{
+    const int v = bluetooth->property("bt_pulse").toInt();
+    bluetooth->setProperty("bt_pulse", v ? 0 : 1);
+
+    // Re-apply stylesheet so the property change takes effect
+    bluetooth->style()->unpolish(bluetooth);
+    bluetooth->style()->polish(bluetooth);
+    bluetooth->update();
+    });
+
+    // Base style + state styles (applies only to this button)
+    bluetooth->setStyleSheet(R"(
     QPushButton#ControlBluetooth {
         border: 1px solid rgba(200, 140, 255, 40);
         border-radius: 12px;
@@ -388,20 +404,31 @@ bluetooth->setStyleSheet(R"(
     }
 
     /* Scanning = brighter “active” glow */
-QPushButton#ControlBluetooth[bt_state="scanning"] {
-    border: 2px solid rgba(255, 210, 255, 200);
-    background: qlineargradient(
+    QPushButton#ControlBluetooth[bt_state="scanning"] {
+    	border: 2px solid rgba(255, 210, 255, 200);
+    	background: qlineargradient(
         x1:0, y1:0,
         x2:1, y2:0,
         stop:0 rgba(210, 160, 255, 40),
         stop:0.5 rgba(210, 160, 255, 170),
         stop:1 rgba(210, 160, 255, 40)
     );
-}
-)");
-auto scanning = std::make_shared<bool>(false);
+    }
+    /* Scanning pulse "ON" phase */
+    QPushButton#ControlBluetooth[bt_state="scanning"][bt_pulse="1"] {
+    border: 2px solid rgba(255, 230, 255, 235);
+    background: qlineargradient(
+        x1:0, y1:0,
+        x2:1, y2:0,
+        stop:0 rgba(230, 190, 255, 70),
+        stop:0.5 rgba(230, 190, 255, 210),
+        stop:1 rgba(230, 190, 255, 70)
+    );
+    }
+    )");
+    auto scanning = std::make_shared<bool>(false);
 
-auto apply_bt_state = [this, bluetooth, scanning]() {
+    auto apply_bt_state = [this, bluetooth, scanning, pulseTimer]() {
     // Connected if ANY known device is connected
     bool connected = false;
     for (auto dev : this->arbiter.system().bluetooth.get_devices()) {
@@ -419,7 +446,18 @@ auto apply_bt_state = [this, bluetooth, scanning]() {
     bluetooth->style()->unpolish(bluetooth);
     bluetooth->style()->polish(bluetooth);
     bluetooth->update();
-};
+
+    if (*scanning) {
+    if (!pulseTimer->isActive())
+        pulseTimer->start();
+    } else {
+    if (pulseTimer->isActive())
+        pulseTimer->stop();
+
+    // reset pulse to off so it doesn't get stuck bright
+    bluetooth->setProperty("bt_pulse", 0);
+    }
+    };
 
 // Initial refresh once Bluetooth service finishes init
 connect(&this->arbiter.system().bluetooth, &Bluetooth::init, bluetooth, [apply_bt_state]() {
