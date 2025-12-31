@@ -2,6 +2,7 @@
 #include <QHBoxLayout>
 #include <QPushButton>
 #include <QLabel>
+#include <QSlider>
 
 #include "app/arbiter.hpp"
 #include "app/widgets/dialog.hpp"
@@ -24,7 +25,8 @@ void ComboQuickView::init()
     volume->setFlat(true);
     this->arbiter.forge().iconize("volume_up", volume, 26);
     auto volume_dialog = new Dialog(this->arbiter, false, volume);
-    volume_dialog->set_body(this->arbiter.forge().volume_slider(false));
+//    volume_dialog->set_body(this->arbiter.forge().volume_slider(false));
+    volume_dialog->set_body(this->arbiter.forge().volume_slider(Qt::Horizontal, false));
     auto volume_timer = new QElapsedTimer();
     connect(volume, &QPushButton::pressed, [volume_timer]{ volume_timer->start(); });
     connect(volume, &QPushButton::released, [this, volume_timer, volume_dialog]{
@@ -43,7 +45,8 @@ void ComboQuickView::init()
     brightness->setFlat(true);
     this->arbiter.forge().iconize("brightness_high", brightness, 26);
     auto brightness_dialog = new Dialog(this->arbiter, false, brightness);
-    brightness_dialog->set_body(this->arbiter.forge().brightness_slider(false));
+    //brightness_dialog->set_body(this->arbiter.forge().brightness_slider(false));
+    brightness_dialog->set_body(this->arbiter.forge().brightness_slider(Qt::Horizontal, false));
     connect(brightness, &QPushButton::clicked, [brightness_dialog]{ brightness_dialog->open(2000); });
     auto brightness_value = new QLabel(QString::number(std::ceil(this->arbiter.system().brightness.value / 2.55)));
     brightness_value->setFont(this->arbiter.forge().font(10));

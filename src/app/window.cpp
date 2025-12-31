@@ -17,6 +17,10 @@
 #include <QLabel>
 #include <QFile>
 
+#include <QSlider>
+#include <QBoxLayout>
+#include <QVBoxLayout>
+
 #include "app/window.hpp"
 
 Dash::NavRail::NavRail()
@@ -143,8 +147,8 @@ void Dash::init()
 
     this->body.status_bar->addWidget(this->status_bar());
 
-this->body.frame_widget->setAttribute(Qt::WA_StyledBackground, true);
-this->body.frame_widget->setStyleSheet(R"(
+    this->body.frame_widget->setAttribute(Qt::WA_StyledBackground, true);
+    this->body.frame_widget->setStyleSheet(R"(
     #DashFrame {
         background: qlineargradient(
             x1:0, y1:0,
@@ -154,10 +158,10 @@ this->body.frame_widget->setStyleSheet(R"(
             stop:1 #4B118A
         );
     }
-)");
+    )");
 
-this->rail.widget->setAttribute(Qt::WA_StyledBackground, true);
-this->rail.widget->setStyleSheet(R"(
+    this->rail.widget->setAttribute(Qt::WA_StyledBackground, true);
+    this->rail.widget->setStyleSheet(R"(
     #NavRail {
         background: qlineargradient(
             x1:0, y1:0,
@@ -192,12 +196,12 @@ this->rail.widget->setStyleSheet(R"(
         background: rgba(200, 140, 255, 80);
     }
 
-)");
+    )");
 
-this->body.control_bar_widget->setFixedHeight(56);
+    this->body.control_bar_widget->setFixedHeight(56);
 
-this->body.control_bar_widget->setAttribute(Qt::WA_StyledBackground, true);
-this->body.control_bar_widget->setStyleSheet(R"(
+    this->body.control_bar_widget->setAttribute(Qt::WA_StyledBackground, true);
+    this->body.control_bar_widget->setStyleSheet(R"(
     #ControlBar {
         background: qlineargradient(
             x1:0, y1:0,
@@ -207,7 +211,7 @@ this->body.control_bar_widget->setStyleSheet(R"(
         );
         border-top: 1px solid rgba(200, 140, 255, 60);
     }
-)");
+    )");
 
     for (auto page : this->arbiter.layout().pages()) {
         auto button = page->button();
@@ -228,6 +232,60 @@ this->body.control_bar_widget->setStyleSheet(R"(
         page->init();
         button->setVisible(page->enabled());
     }
+    // Push the rail buttons up so the quick view sits at the bottom
+    this->rail.layout->addStretch(1);
+
+// ---- NavRail QuickViews (rail-only, built vertical) ----
+auto rail_quickviews_widget = new QWidget(this->rail.widget);
+rail_quickviews_widget->setObjectName("RailQuickViews");
+
+auto rail_quickviews = new QStackedLayout(rail_quickviews_widget);
+rail_quickviews->setContentsMargins(0, 0, 0, 0);
+rail_quickviews->setSpacing(0);
+
+// Index mapping:
+// 0 = none, 1 = volume, 2 = brightness, 3 = combo
+rail_quickviews->addWidget(new QWidget()); // none/off
+
+auto rail_volume = this->arbiter.forge().volume_slider(Qt::Vertical, true);
+rail_volume->setObjectName("RailVolumeQuickView");
+rail_quickviews->addWidget(rail_volume);
+
+auto rail_brightness = this->arbiter.forge().brightness_slider(Qt::Vertical, true);
+rail_brightness->setObjectName("RailBrightnessQuickView");
+rail_quickviews->addWidget(rail_brightness);
+
+// Combo: stack both sliders, no buttons (saves space)
+auto rail_combo = new QWidget();
+rail_combo->setObjectName("RailComboQuickView");
+auto rail_combo_layout = new QVBoxLayout(rail_combo);
+rail_combo_layout->setContentsMargins(0, 0, 0, 0);
+rail_combo_layout->setSpacing(8);
+rail_combo_layout->addWidget(this->arbiter.forge().volume_slider(Qt::Vertical, false));
+rail_combo_layout->addWidget(this->arbiter.forge().brightness_slider(Qt::Vertical, false));
+rail_quickviews->addWidget(rail_combo);
+
+// Pick correct view based on current quickview setting name
+auto name_to_index = [](const QString &name) -> int {
+    if (name == "volume") return 1;
+    if (name == "brightness") return 2;
+    if (name == "combo") return 3;
+    return 0; // "none" or unknown
+};
+
+rail_quickviews->setCurrentIndex(name_to_index(this->arbiter.layout().control_bar.curr_quick_view->name()));
+
+connect(&this->arbiter, &Arbiter::curr_quick_view_changed,
+        [rail_quickviews, name_to_index](QuickView *qv){
+            rail_quickviews->setCurrentIndex(name_to_index(qv->name()));
+        });
+
+// Size + alignment so it sits bottom-left neatly
+rail_quickviews_widget->setFixedWidth(64);
+rail_quickviews_widget->setFixedHeight(260);
+
+this->rail.layout->addWidget(rail_quickviews_widget, 0, Qt::AlignLeft | Qt::AlignBottom);
+
     this->set_page(this->arbiter.layout().curr_page);
 
     this->body.control_bar->addWidget(this->control_bar());
@@ -347,17 +405,19 @@ QWidget *Dash::control_bar() const
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
 
-    auto quick_views = new QStackedLayout();
-    quick_views->setContentsMargins(0, 0, 0, 0);
-    layout->addLayout(quick_views);
-    for (auto quick_view : this->arbiter.layout().control_bar.quick_views()) {
-        quick_views->addWidget(quick_view->widget());
-        quick_view->init();
-    }
-    quick_views->setCurrentWidget(this->arbiter.layout().control_bar.curr_quick_view->widget());
-    connect(&this->arbiter, &Arbiter::curr_quick_view_changed, [quick_views](QuickView *quick_view){
-        quick_views->setCurrentWidget(quick_view->widget());
-    });
+//disabling quick views here so i can move them to the sidebar - better layout for a portrait screen
+//    auto quick_views = new QStackedLayout();
+//   quick_views->setContentsMargins(0, 0, 0, 0);
+//    layout->addLayout(quick_views);
+//    for (auto quick_view : this->arbiter.layout().control_bar.quick_views()) {
+//        quick_views->addWidget(quick_view->widget());
+//        quick_view->init();
+//    }
+//    quick_views->setCurrentWidget(this->arbiter.layout().control_bar.curr_quick_view->widget());
+//    connect(&this->arbiter, &Arbiter::curr_quick_view_changed, [quick_views](QuickView *quick_view){
+//        quick_views->setCurrentWidget(quick_view->widget());
+//    });
+
 auto cpuTemp = new QLabel("--.-°C");
 cpuTemp->setObjectName("CpuTemp");
 cpuTemp->setAlignment(Qt::AlignVCenter | Qt::AlignRight);
