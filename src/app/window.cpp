@@ -12,7 +12,7 @@
 //bt test
 #include <QTabWidget>
 #include <QTimer>
-
+#include <QToolTip>
 
 
 #include "app/window.hpp"
@@ -496,6 +496,48 @@ connect(&this->arbiter.system().bluetooth, &Bluetooth::media_player_changed, blu
 
 // Run once now (best effort)
 apply_bt_state();
+
+// ---- Long-press tooltip (connection / scanning info) ----
+auto build_bt_tooltip = [this, scanning]() -> QString {
+    QStringList connectedNames;
+
+    for (auto dev : this->arbiter.system().bluetooth.get_devices()) {
+        if (dev && dev->isConnected())
+            connectedNames << dev->name();
+    }
+
+    QString tip = "Bluetooth\n";
+
+    if (*scanning)
+        tip += "Scanning: yes\n";
+    else
+        tip += "Scanning: no\n";
+
+    if (connectedNames.isEmpty()) {
+        tip += "Connected: none";
+    } else {
+        tip += "Connected: " + connectedNames.join(", ");
+    }
+
+    return tip;
+};
+
+// Press-and-hold to show tooltip (touch-friendly)
+connect(bluetooth, &QPushButton::pressed, bluetooth, [bluetooth, build_bt_tooltip]{
+    QTimer::singleShot(550, bluetooth, [bluetooth, build_bt_tooltip]{
+        if (!bluetooth->isDown())
+            return;
+
+        const QString tip = build_bt_tooltip();
+        const QPoint pos = bluetooth->mapToGlobal(QPoint(bluetooth->width() / 2, 0));
+        QToolTip::showText(pos, tip, bluetooth);
+    });
+});
+
+// Hide tooltip when released
+connect(bluetooth, &QPushButton::released, bluetooth, []{
+    QToolTip::hideText();
+});
 
 connect(bluetooth, &QPushButton::clicked, [this]{
     Page *settingsPage = nullptr;
