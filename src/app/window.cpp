@@ -23,6 +23,7 @@
 #include <QVBoxLayout>
 
 #include "app/window.hpp"
+#include "app/widgets/pulse_vu_meter.hpp"
 
 Dash::NavRail::NavRail()
     : group()
@@ -235,6 +236,16 @@ void Dash::init()
     }
     // Push the rail buttons up so the quick view sits at the bottom
     this->rail.layout->addStretch(1);
+
+// ---- VU meter (below page buttons) ----
+auto vu = new PulseVUMeter(this->rail.widget);
+vu->setFixedWidth(64);
+vu->setFixedHeight(540);
+this->rail.layout->addWidget(vu, 0, Qt::AlignHCenter);
+this->rail.layout->addSpacing(10);
+
+// (optional) if you need the volume widget pinned to bottom:
+this->rail.layout->addStretch(1);
 
 auto railVol = new RailVolume(this->arbiter, this);
 this->rail.layout->addStretch(1);         // push it toward the bottom

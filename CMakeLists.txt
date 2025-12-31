@@ -149,6 +149,8 @@ target_link_libraries(dash
     ${QTGSTREAMER_QUICK_LIBRARIES}
     ${QTGSTREAMER_QUICK_LIBRARY}
     ${TAGLIB_LIBRARIES}
+    pulse
+    asound
     )
 
 install(TARGETS dash DESTINATION bin)
