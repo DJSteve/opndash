@@ -13,6 +13,8 @@
 #include <QTabWidget>
 #include <QTimer>
 
+
+
 #include "app/window.hpp"
 
 Dash::NavRail::NavRail()
@@ -366,7 +368,6 @@ QWidget *Dash::control_bar() const
 connect(bluetooth, &QPushButton::clicked, [this]{
     Page *settingsPage = nullptr;
 
-    // Settings page is Page(..., "Settings", "tune", ...)
     for (auto p : this->arbiter.layout().pages()) {
         if (p && p->name() == "Settings") {
             settingsPage = p;
@@ -377,19 +378,25 @@ connect(bluetooth, &QPushButton::clicked, [this]{
 
     auto dash = const_cast<Dash*>(this);
     dash->set_page(settingsPage);
+QTimer::singleShot(50, dash, [settingsPage]{
+    // Page::container() is a PageContainer (QFrame) wrapping the real page widget
+    auto cont = settingsPage->container();
+    if (!cont || !cont->layout() || cont->layout()->count() < 1)
+        return;
 
-    // After the page is shown, switch to the Bluetooth tab
-    QTimer::singleShot(0, dash, [settingsPage]{
-        auto tabs = qobject_cast<QTabWidget*>(settingsPage->container());
-        if (!tabs) return;
+    QWidget *inner = cont->layout()->itemAt(0)->widget();
+    auto tabs = qobject_cast<QTabWidget*>(inner);
+    if (!tabs)
+        return;
 
-        for (int i = 0; i < tabs->count(); ++i) {
-            if (tabs->tabText(i).compare("Bluetooth", Qt::CaseInsensitive) == 0) {
-                tabs->setCurrentIndex(i);
-                break;
-            }
+    for (int i = 0; i < tabs->count(); ++i) {
+        if (tabs->tabText(i).contains("Bluetooth", Qt::CaseInsensitive)) {
+            tabs->setCurrentIndex(i);
+            break;
         }
-    });
+    }
+});
+
 });
 
 
