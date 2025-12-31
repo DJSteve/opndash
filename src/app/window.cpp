@@ -362,7 +362,7 @@ QWidget *Dash::control_bar() const
     auto bluetooth = new QPushButton();
     bluetooth->setFlat(true);
     bluetooth->setToolTip("Bluetooth");
-    this->arbiter.forge().iconize("bluetooth_searching", bluetooth, 26);
+    this->arbiter.forge().iconize("bluetooth_control", bluetooth, 32);
     layout->addWidget(bluetooth);
     bluetooth->setObjectName("ControlBluetooth");
     bluetooth->setProperty("bt_state", "idle");
@@ -433,6 +433,14 @@ QWidget *Dash::control_bar() const
     bool connected = false;
     for (auto dev : this->arbiter.system().bluetooth.get_devices()) {
         if (dev && dev->isConnected()) { connected = true; break; }
+    }
+
+    if (*scanning) {
+        this->arbiter.forge().iconize("bluetooth_control", bluetooth, 32);
+    } else if (connected) {
+        this->arbiter.forge().iconize("bluetooth_control_connected", bluetooth, 32);
+    } else {
+        this->arbiter.forge().iconize("bluetooth_control", bluetooth, 32);
     }
 
     const char *state =
@@ -529,7 +537,7 @@ QTimer::singleShot(50, dash, [settingsPage]{
     dialog->set_body(this->power_control());
     auto shutdown = new QPushButton();
     shutdown->setFlat(true);
-    this->arbiter.forge().iconize("power_settings_new", shutdown, 26);
+    this->arbiter.forge().iconize("power_settings_new", shutdown, 32);
     layout->addWidget(shutdown);
     connect(shutdown, &QPushButton::clicked, [dialog]{ dialog->open(); });
 

@@ -23,6 +23,8 @@
         <file>icons/fast_rewind.svg</file>
         <file>icons/volume_off.svg</file>
         <file>icons/save_alt.svg</file>
+        <file>icons/bluetooth_control.svg</file>
+        <file>icons/bluetooth_control_connected.svg</file>
         <file>icons/bluetooth_searching.svg</file>
         <file>icons/playlist_add_check.svg</file>
         <file>icons/playlist_add.svg</file>

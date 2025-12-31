@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 24 24">
+  <defs>
+    <!-- Purple -> cyan theme gradient -->
+    <linearGradient id="btGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#B85CFF"></stop>
+      <stop offset="1" stop-color="#2FE6FF"></stop>
+    </linearGradient>
+  </defs>
+
+  <!-- Dark “outline” behind for contrast on bright backgrounds -->
+  <path d="M12 2.5 V21.5
+       M12 12 L7.2 8.3
+       M12 12 L7.2 15.7
+       M12 2.5 L17.8 7.2 L12 12 L17.8 16.8 L12 21.5" fill="none" stroke="#120826" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"></path>
+
+  <!-- Main Bluetooth rune -->
+  <path d="M12 2.5 V21.5
+       M12 12 L7.2 8.3
+       M12 12 L7.2 15.7
+       M12 2.5 L17.8 7.2 L12 12 L17.8 16.8 L12 21.5" fill="none" stroke="url(#btGrad)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"></path>
+</svg>
