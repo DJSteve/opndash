@@ -388,13 +388,41 @@ auto read_cpu_temp_c = []() -> double {
 
 auto tempTimer = new QTimer(cpuTemp);
 tempTimer->setInterval(2000); // 1s update; change to 2000 if you prefer
-connect(tempTimer, &QTimer::timeout, cpuTemp, [cpuTemp, read_cpu_temp_c]{
+
+    connect(tempTimer, &QTimer::timeout, cpuTemp, [cpuTemp, read_cpu_temp_c]{
     const double t = read_cpu_temp_c();
     if (t < 0.0) {
         cpuTemp->setText("--.-°C");
+        cpuTemp->setStyleSheet(R"(
+            QLabel#CpuTemp { color: rgba(180, 180, 180, 180); font-size: 12px; padding-right: 8px; }
+        )");
         return;
     }
+
     cpuTemp->setText(QString::asprintf("%.1f°C", t));
+
+    // Colour bands (Pi 5: warm starts ~70C, hot ~80C)
+    if (t < 60.0) {
+        // Cool: bright cyan-ish (fits your purple/blue theme)
+        cpuTemp->setStyleSheet(R"(
+            QLabel#CpuTemp { color: rgba(80, 230, 255, 230); font-size: 12px; padding-right: 8px; }
+        )");
+    } else if (t < 70.0) {
+        // Normal: lilac
+        cpuTemp->setStyleSheet(R"(
+            QLabel#CpuTemp { color: rgba(200, 140, 255, 230); font-size: 12px; padding-right: 8px; }
+        )");
+    } else if (t < 80.0) {
+        // Warm: amber
+        cpuTemp->setStyleSheet(R"(
+            QLabel#CpuTemp { color: rgba(255, 190, 90, 240); font-size: 12px; padding-right: 8px; }
+        )");
+    } else {
+        // Hot: red
+        cpuTemp->setStyleSheet(R"(
+            QLabel#CpuTemp { color: rgba(255, 80, 80, 240); font-size: 12px; padding-right: 8px; font-weight: 600; }
+        )");
+    }
 });
 tempTimer->start();
 
