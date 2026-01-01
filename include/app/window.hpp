@@ -16,11 +16,17 @@
 #include "app/pages/page.hpp"
 
 #include "app/arbiter.hpp"
+#include "app/widgets/nav_neon_indicator.hpp"
+
 
 class FullscreenToggle;
 
+class NavNeonIndicator;
+
 class QGraphicsOpacityEffect;
 class QPropertyAnimation;
+
+
 
 class Dash : public QWidget {
     Q_OBJECT
@@ -61,6 +67,8 @@ class Dash : public QWidget {
     QPropertyAnimation *transition_anim = nullptr;
     bool transitioning = false;
     Page *pending_page = nullptr;
+    NavNeonIndicator *nav_neon = nullptr;
+
 
 void set_page(Page *page);
     QWidget *status_bar() const;
