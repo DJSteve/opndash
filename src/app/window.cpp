@@ -25,24 +25,8 @@
 #include "app/window.hpp"
 #include "app/widgets/pulse_vu_meter.hpp"
 #include "app/widgets/nav_neon_indicator.hpp"
+#include "app/widgets/nav_neon_resize_filter.hpp"
 
-class NavNeonResizeFilter : public QObject {
-public:
-    explicit NavNeonResizeFilter(NavNeonIndicator *neon, QWidget *rail)
-        : QObject(rail), neon_(neon), rail_(rail) {}
-
-protected:
-    bool eventFilter(QObject *obj, QEvent *event) override {
-        if (obj == rail_ && event->type() == QEvent::Resize) {
-            neon_->setGeometry(rail_->rect());
-        }
-        return QObject::eventFilter(obj, event);
-    }
-
-private:
-    NavNeonIndicator *neon_;
-    QWidget *rail_;
-};
 
 Dash::NavRail::NavRail()
     : group()
@@ -252,12 +236,6 @@ this->rail.widget->installEventFilter(new NavNeonResizeFilter(this->nav_neon, th
 	button->setMaximumSize(56, 56);
 	button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
 
-connect(button, &QPushButton::toggled, this, [this, button](bool checked){
-    if (checked && this->nav_neon) {
-        this->nav_neon->moveToButton(button, true);
-    }
-});
-
         QIcon icon(new StylizedIconEngine(this->arbiter, QString(":/icons/%1.svg").arg(page->icon_name()), true));
         this->arbiter.forge().iconize(icon, button, 32);
 
@@ -286,13 +264,6 @@ this->rail.layout->addStretch(1);         // push it toward the bottom
 this->rail.layout->addWidget(railVol);
 
     this->set_page(this->arbiter.layout().curr_page);
-// ensure indicator is correctly positioned on startup
-if (this->nav_neon) {
-    auto id = this->arbiter.layout().page_id(this->arbiter.layout().curr_page);
-    if (auto b = this->rail.group.button(id)) {
-        this->nav_neon->moveToButton(b, false); // snap (no anim) at boot
-    }
-}
 
 // Snap indicator to current page on boot
 if (this->nav_neon) {
@@ -309,16 +280,14 @@ if (this->nav_neon) {
 void Dash::set_page(Page *page)
 {
     auto id = this->arbiter.layout().page_id(page);
-    if (auto b = this->rail.group.button(id))
-        b->setChecked(true);
 
-if (auto b = this->rail.group.button(id)) {
-    b->setChecked(true);
+    if (auto b = this->rail.group.button(id)) {
+    	b->setChecked(true);
 
-    if (this->nav_neon) {
-        this->nav_neon->moveToButton(b, true); // animate to active button
+    	if (this->nav_neon) {
+        	this->nav_neon->moveToButton(b, true); // animate to active button
+    	}
     }
-}
 
     QWidget *target = page->container();
     QWidget *current = this->body.frame->currentWidget();

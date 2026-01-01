@@ -16,7 +16,6 @@
 #include "app/pages/page.hpp"
 
 #include "app/arbiter.hpp"
-#include "app/widgets/nav_neon_indicator.hpp"
 
 
 class FullscreenToggle;
