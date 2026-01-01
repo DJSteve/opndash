@@ -17,6 +17,7 @@
 //Include needed for PI5 Cpu temp
 #include <QLabel>
 #include <QFile>
+#include <QTextStream>
 
 #include <QSlider>
 #include <QBoxLayout>
@@ -119,6 +120,16 @@ Dash::Dash(Arbiter &arbiter)
 
 void Dash::init()
 {
+    // Load external theme stylesheet
+    {
+    	QFile f("/home/steve/dash/theme/theme.qss");
+    		if (f.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        QTextStream ts(&f);
+        QString qss = ts.readAll();
+        this->setStyleSheet(qss);
+    	}
+    }
+
     // ---- Safe page transition overlay (does not touch page widgets / OpenGL) ----
     if (!this->transition_overlay) {
         this->transition_overlay = new QWidget(this->body.frame_widget);
@@ -127,17 +138,6 @@ void Dash::init()
         this->transition_overlay->setGeometry(this->body.frame_widget->rect());
         this->transition_overlay->raise();
         this->transition_overlay->hide();
-
-        // Dark purple cover to mask page switch
-	this->transition_overlay->setStyleSheet(R"(
-	    background: qradialgradient(
-	        cx:0.5, cy:0.5, radius:0.9,
-	        stop:0 rgba(180, 120, 255, 220),
-	        stop:0.4 rgba(90, 40, 200, 200),
-	        stop:0.75 rgba(20, 10, 60, 230),
-	        stop:1 rgba(10, 8, 20, 255)
-	    );
-	)");
 
         this->transition_fx = new QGraphicsOpacityEffect(this->transition_overlay);
         this->transition_overlay->setGraphicsEffect(this->transition_fx);
@@ -153,79 +153,21 @@ void Dash::init()
     this->body.status_bar->addWidget(this->status_bar());
 
     this->body.frame_widget->setAttribute(Qt::WA_StyledBackground, true);
-    this->body.frame_widget->setStyleSheet(R"(
-    #DashFrame {
-        background: qlineargradient(
-            x1:0, y1:0,
-            x2:0, y2:1,
-            stop:0 #070814,
-            stop:0.45 #1A1A5E,
-            stop:1 #4B118A
-        );
-    }
-    )");
 
     this->rail.widget->setAttribute(Qt::WA_StyledBackground, true);
-    this->rail.widget->setStyleSheet(R"(
-    #NavRail {
-        background: qlineargradient(
-            x1:0, y1:0,
-            x2:0, y2:1,
-            stop:0 #0D0E28,
-            stop:1 #5A189A
-        );
-        border-right: 1px solid rgba(0, 0, 0, 180);          /* shadow edge */
-        border-left: 1px solid rgba(220, 170, 255, 100);      /* highlight edge */
-    }
-
-    /* All nav buttons */
-    #NavRail QPushButton {
-        background: transparent;
-        border: 0px;
-        margin: 6px 4px;
-        padding: 6px;
-        border-radius: 10px;
-    }
-
-    #NavRail QPushButton:checked {
-        background: qradialgradient(
-            cx:0.5, cy:0.5, radius:0.9,
-            stop:0 rgba(190, 130, 255, 200),
-            stop:0.5 rgba(120, 60, 220, 120),
-            stop:1 rgba(0, 0, 0, 0)
-        );
-    }
-
-    /* Optional: press feedback */
-    #NavRail QPushButton:pressed {
-        background: rgba(200, 140, 255, 80);
-    }
-
-    )");
 
     this->body.control_bar_widget->setFixedHeight(56);
 
     this->body.control_bar_widget->setAttribute(Qt::WA_StyledBackground, true);
-    this->body.control_bar_widget->setStyleSheet(R"(
-    #ControlBar {
-        background: qlineargradient(
-            x1:0, y1:0,
-            x2:0, y2:1,
-            stop:0 #4B118A,
-            stop:1 #2D0F55
-        );
-        border-top: 1px solid rgba(200, 140, 255, 60);
-    }
-    )");
 
-// Neon indicator (behind the buttons)
-this->nav_neon = new NavNeonIndicator(this->rail.widget);
-this->nav_neon->setGeometry(this->rail.widget->rect());
-this->nav_neon->lower(); // stay behind buttons
-this->nav_neon->show();
+	// Neon indicator (behind the buttons)
+	this->nav_neon = new NavNeonIndicator(this->rail.widget);
+	this->nav_neon->setGeometry(this->rail.widget->rect());
+	this->nav_neon->lower(); // stay behind buttons
+	this->nav_neon->show();
 
-// keep it full-height if the rail resizes
-this->rail.widget->installEventFilter(new NavNeonResizeFilter(this->nav_neon, this->rail.widget));
+	// keep it full-height if the rail resizes
+	this->rail.widget->installEventFilter(new NavNeonResizeFilter(this->nav_neon, this->rail.widget));
 
     for (auto page : this->arbiter.layout().pages()) {
         auto button = page->button();
@@ -246,31 +188,29 @@ this->rail.widget->installEventFilter(new NavNeonResizeFilter(this->nav_neon, th
         page->init();
         button->setVisible(page->enabled());
     }
-    // Push the rail buttons up so the quick view sits at the bottom
-    this->rail.layout->addStretch(1);
 
-// ---- VU meter (below page buttons) ----
-auto vu = new PulseVUMeter(this->rail.widget);
-vu->setFixedWidth(64);
-vu->setFixedHeight(540);
-this->rail.layout->addWidget(vu, 0, Qt::AlignHCenter);
-this->rail.layout->addSpacing(10);
+	// ---- VU meter (below page buttons) ----
+	auto vu = new PulseVUMeter(this->rail.widget);
+	vu->setFixedWidth(64);
+	vu->setFixedHeight(540);
+	this->rail.layout->addWidget(vu, 0, Qt::AlignHCenter);
+	this->rail.layout->addSpacing(10);
 
-// (optional) if you need the volume widget pinned to bottom:
-this->rail.layout->addStretch(1);
+	// (optional) if you need the volume widget pinned to bottom:
+	this->rail.layout->addStretch(1);
 
-auto railVol = new RailVolume(this->arbiter, this);
-this->rail.layout->addStretch(1);         // push it toward the bottom
-this->rail.layout->addWidget(railVol);
+	auto railVol = new RailVolume(this->arbiter, this->rail.widget);
 
-    this->set_page(this->arbiter.layout().curr_page);
+	this->rail.layout->addWidget(railVol, 0, Qt::AlignHCenter);
 
-// Snap indicator to current page on boot
-if (this->nav_neon) {
-    int id = this->arbiter.layout().page_id(this->arbiter.layout().curr_page);
-    if (auto b = this->rail.group.button(id))
-        this->nav_neon->moveToButton(b, false);
-}
+	this->set_page(this->arbiter.layout().curr_page);
+
+	// Snap indicator to current page on boot
+	if (this->nav_neon) {
+	    int id = this->arbiter.layout().page_id(this->arbiter.layout().curr_page);
+    	if (auto b = this->rail.group.button(id))
+        	this->nav_neon->moveToButton(b, false);
+	}
 
     this->body.control_bar->addWidget(this->control_bar());
 
@@ -356,18 +296,7 @@ QWidget *Dash::status_bar() const
     auto widget = new QWidget();
     widget->setObjectName("StatusBar");
 
-widget->setAttribute(Qt::WA_StyledBackground, true);
-widget->setStyleSheet(R"(
-    #StatusBar {
-        background: qlineargradient(
-            x1:0, y1:0,
-            x2:0, y2:1,
-            stop:0 #120A2A,
-            stop:1 #2A0A5E
-        );
-        border-top: 1px solid rgba(180, 120, 255, 60);
-    }
-)");
+    widget->setAttribute(Qt::WA_StyledBackground, true);
     auto layout = new QHBoxLayout(widget);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
@@ -397,33 +326,15 @@ QWidget *Dash::control_bar() const
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
 
-//disabling quick views here so i can move them to the sidebar - better layout for a portrait screen
-//    auto quick_views = new QStackedLayout();
-//   quick_views->setContentsMargins(0, 0, 0, 0);
-//    layout->addLayout(quick_views);
-//    for (auto quick_view : this->arbiter.layout().control_bar.quick_views()) {
-//        quick_views->addWidget(quick_view->widget());
-//        quick_view->init();
-//    }
-//    quick_views->setCurrentWidget(this->arbiter.layout().control_bar.curr_quick_view->widget());
-//    connect(&this->arbiter, &Arbiter::curr_quick_view_changed, [quick_views](QuickView *quick_view){
-//        quick_views->setCurrentWidget(quick_view->widget());
-//    });
 
-auto cpuTemp = new QLabel("--.-°C");
-cpuTemp->setObjectName("CpuTemp");
-cpuTemp->setAlignment(Qt::AlignVCenter | Qt::AlignRight);
-cpuTemp->setMinimumWidth(70); // enough for "59.2°C"
-cpuTemp->setStyleSheet(R"(
-    QLabel#CpuTemp {
-        color: rgba(230, 200, 255, 210);
-        font-size: 12px;
-        padding-right: 8px;
-    }
-)");
-layout->addWidget(cpuTemp, 0);
+    auto cpuTemp = new QLabel("--.-°C");
+    cpuTemp->setObjectName("CpuTemp");
+    cpuTemp->setAlignment(Qt::AlignVCenter | Qt::AlignRight);
+    cpuTemp->setMinimumWidth(70); // enough for "59.2°C"
+    cpuTemp->setProperty("temp_state", "unknown");
+    layout->addWidget(cpuTemp, 0);
 
-auto read_cpu_temp_c = []() -> double {
+    auto read_cpu_temp_c = []() -> double {
     QFile f("/sys/class/thermal/thermal_zone0/temp");
     if (!f.open(QIODevice::ReadOnly | QIODevice::Text))
         return -1.0;
@@ -441,52 +352,37 @@ auto read_cpu_temp_c = []() -> double {
 auto tempTimer = new QTimer(cpuTemp);
 tempTimer->setInterval(2000); // 1s update; change to 2000 if you prefer
 
-    connect(tempTimer, &QTimer::timeout, cpuTemp, [cpuTemp, read_cpu_temp_c]{
+auto applyTempState = [cpuTemp](const char *state) {
+    cpuTemp->setProperty("temp_state", state);
+
+    // Force QSS to re-apply for property selectors
+    cpuTemp->style()->unpolish(cpuTemp);
+    cpuTemp->style()->polish(cpuTemp);
+    cpuTemp->update();
+};
+
+auto updateTemp = [cpuTemp, read_cpu_temp_c, applyTempState]() {
     const double t = read_cpu_temp_c();
+
     if (t < 0.0) {
         cpuTemp->setText("--.-°C");
-        cpuTemp->setStyleSheet(R"(
-            QLabel#CpuTemp { color: rgba(180, 180, 180, 180); font-size: 12px; padding-right: 8px; }
-        )");
+        applyTempState("unknown");
         return;
     }
 
     cpuTemp->setText(QString::asprintf("%.1f°C", t));
 
-    // Colour bands (Pi 5: warm starts ~70C, hot ~80C)
-    if (t < 60.0) {
-        // Cool: bright cyan-ish (fits your purple/blue theme)
-        cpuTemp->setStyleSheet(R"(
-            QLabel#CpuTemp { color: rgba(80, 230, 255, 230); font-size: 12px; padding-right: 8px; }
-        )");
-    } else if (t < 70.0) {
-        // Normal: lilac
-        cpuTemp->setStyleSheet(R"(
-            QLabel#CpuTemp { color: rgba(200, 140, 255, 230); font-size: 12px; padding-right: 8px; }
-        )");
-    } else if (t < 80.0) {
-        // Warm: amber
-        cpuTemp->setStyleSheet(R"(
-            QLabel#CpuTemp { color: rgba(255, 190, 90, 240); font-size: 12px; padding-right: 8px; }
-        )");
-    } else {
-        // Hot: red
-        cpuTemp->setStyleSheet(R"(
-            QLabel#CpuTemp { color: rgba(255, 80, 80, 240); font-size: 12px; padding-right: 8px; font-weight: 600; }
-        )");
-    }
-});
+    if (t < 60.0)       applyTempState("cool");
+    else if (t < 70.0)  applyTempState("normal");
+    else if (t < 80.0)  applyTempState("warm");
+    else                applyTempState("hot");
+};
+
+connect(tempTimer, &QTimer::timeout, cpuTemp, updateTemp);
+
+
 tempTimer->start();
-
-// Run once immediately so it shows on boot without waiting 1s
-QTimer::singleShot(0, cpuTemp, [cpuTemp, read_cpu_temp_c]{
-    const double t = read_cpu_temp_c();
-    if (t < 0.0) {
-        cpuTemp->setText("--.-°C");
-        return;
-    }
-    cpuTemp->setText(QString::asprintf("%.1f°C", t));
-});
+updateTemp(); // run immediately on boot
 
 
     layout->addStretch();
@@ -515,49 +411,6 @@ QTimer::singleShot(0, cpuTemp, [cpuTemp, read_cpu_temp_c]{
     bluetooth->update();
     });
 
-    // Base style + state styles (applies only to this button)
-    bluetooth->setStyleSheet(R"(
-    QPushButton#ControlBluetooth {
-        border: 1px solid rgba(200, 140, 255, 40);
-        border-radius: 12px;
-        padding: 6px;
-        background: rgba(0, 0, 0, 0);
-    }
-
-    /* Connected = stronger purple glow */
-    QPushButton#ControlBluetooth[bt_state="connected"] {
-        border: 1px solid rgba(220, 170, 255, 130);
-        background: qradialgradient(
-            cx:0.5, cy:0.5, radius:0.9,
-            stop:0 rgba(190, 130, 255, 140),
-            stop:0.6 rgba(80, 30, 160, 70),
-            stop:1 rgba(0, 0, 0, 0)
-        );
-    }
-
-    /* Scanning = brighter “active” glow */
-    QPushButton#ControlBluetooth[bt_state="scanning"] {
-    	border: 2px solid rgba(255, 210, 255, 200);
-    	background: qlineargradient(
-        x1:0, y1:0,
-        x2:1, y2:0,
-        stop:0 rgba(210, 160, 255, 40),
-        stop:0.5 rgba(210, 160, 255, 170),
-        stop:1 rgba(210, 160, 255, 40)
-    );
-    }
-    /* Scanning pulse "ON" phase */
-    QPushButton#ControlBluetooth[bt_state="scanning"][bt_pulse="1"] {
-    border: 2px solid rgba(255, 230, 255, 235);
-    background: qlineargradient(
-        x1:0, y1:0,
-        x2:1, y2:0,
-        stop:0 rgba(230, 190, 255, 70),
-        stop:0.5 rgba(230, 190, 255, 210),
-        stop:1 rgba(230, 190, 255, 70)
-    );
-    }
-    )");
     auto scanning = std::make_shared<bool>(false);
 
     auto apply_bt_state = [this, bluetooth, scanning, pulseTimer]() {
