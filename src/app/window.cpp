@@ -27,6 +27,7 @@
 #include "app/widgets/pulse_vu_meter.hpp"
 #include "app/widgets/nav_neon_indicator.hpp"
 #include "app/widgets/nav_neon_resize_filter.hpp"
+#include "app/widgets/cpu_temp_widget.hpp"
 
 
 Dash::NavRail::NavRail()
@@ -326,64 +327,8 @@ QWidget *Dash::control_bar() const
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(0);
 
-
-    auto cpuTemp = new QLabel("--.-°C");
-    cpuTemp->setObjectName("CpuTemp");
-    cpuTemp->setAlignment(Qt::AlignVCenter | Qt::AlignRight);
-    cpuTemp->setMinimumWidth(70); // enough for "59.2°C"
-    cpuTemp->setProperty("temp_state", "unknown");
-    layout->addWidget(cpuTemp, 0);
-
-    auto read_cpu_temp_c = []() -> double {
-    QFile f("/sys/class/thermal/thermal_zone0/temp");
-    if (!f.open(QIODevice::ReadOnly | QIODevice::Text))
-        return -1.0;
-
-    const QByteArray raw = f.readAll().trimmed();
-    bool ok = false;
-    const long v = raw.toLong(&ok);
-    if (!ok) return -1.0;
-
-    // Most kernels report millidegrees C
-    if (v > 1000) return v / 1000.0;
-    return static_cast<double>(v);
-};
-
-auto tempTimer = new QTimer(cpuTemp);
-tempTimer->setInterval(2000); // 1s update; change to 2000 if you prefer
-
-auto applyTempState = [cpuTemp](const char *state) {
-    cpuTemp->setProperty("temp_state", state);
-
-    // Force QSS to re-apply for property selectors
-    cpuTemp->style()->unpolish(cpuTemp);
-    cpuTemp->style()->polish(cpuTemp);
-    cpuTemp->update();
-};
-
-auto updateTemp = [cpuTemp, read_cpu_temp_c, applyTempState]() {
-    const double t = read_cpu_temp_c();
-
-    if (t < 0.0) {
-        cpuTemp->setText("--.-°C");
-        applyTempState("unknown");
-        return;
-    }
-
-    cpuTemp->setText(QString::asprintf("%.1f°C", t));
-
-    if (t < 60.0)       applyTempState("cool");
-    else if (t < 70.0)  applyTempState("normal");
-    else if (t < 80.0)  applyTempState("warm");
-    else                applyTempState("hot");
-};
-
-connect(tempTimer, &QTimer::timeout, cpuTemp, updateTemp);
-
-
-tempTimer->start();
-updateTemp(); // run immediately on boot
-
+    auto cpuTemp = new CpuTempWidget(widget);
+    layout->addWidget(cpuTemp);
 
     layout->addStretch();
 
