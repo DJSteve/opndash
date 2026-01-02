@@ -88,6 +88,17 @@
     border-top: 1px solid rgba(180, 120, 255, 60);
 }
 
+QLabel#StatusTitle {
+    color: rgba(220, 190, 255, 200);
+    font-size: 12px;
+}
+
+QLabel#StatusClock {
+    color: rgba(80, 230, 255, 220);   /* cyan */
+    font-size: 14px;
+    font-weight: 600;
+}
+
 /* ---- CPU temp label base style (dynamic colours also) ---- */
 QLabel#CpuTemp {
     color: rgba(230, 200, 255, 210);

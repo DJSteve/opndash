@@ -3,6 +3,8 @@
 #include <QWidget>
 #include <QHBoxLayout>
 #include <QLabel>
+#include <QTimer>
+#include <QDateTime>
 
 #include "app/window.hpp" // Dash
 #include "app/arbiter.hpp"
@@ -20,13 +22,29 @@ QWidget *build_status_bar(Dash *dash)
     layout->setContentsMargins(10, 6, 10, 6);
     layout->setSpacing(10);
 
-    // In your current build the status bar doesn't need much.
-    // Keep it minimal but structured so you can add to it later.
-    auto title = new QLabel("OpenDash", widget);
+    auto title = new QLabel("---", widget);
     title->setObjectName("StatusTitle");
+
+    auto clock = new QLabel("--:--", widget);
+    clock->setObjectName("StatusClock");
+    clock->setAlignment(Qt::AlignVCenter | Qt::AlignRight);
 
     layout->addWidget(title);
     layout->addStretch(1);
+    layout->addWidget(clock);
+
+    // update clock once per second
+    auto timer = new QTimer(widget);
+    timer->setInterval(1000);
+
+    QObject::connect(timer, &QTimer::timeout, widget, [clock]{
+    	clock->setText(QDateTime::currentDateTime().toString("HH:mm"));
+    });
+    timer->start();
+
+    // run immediately
+    clock->setText(QDateTime::currentDateTime().toString("HH:mm"));
+
 
     return widget;
 }
