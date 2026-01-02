@@ -70,6 +70,7 @@ class Dash : public QWidget {
 
 
 void set_page(Page *page);
+void open_settings_bluetooth();
     QWidget *status_bar() const;
     QWidget *control_bar() const;
     QWidget *power_control() const;

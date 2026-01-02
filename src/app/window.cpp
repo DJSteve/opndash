@@ -18,7 +18,7 @@
 #include <QLabel>
 #include <QFile>
 #include <QTextStream>
-
+#include <QTabWidget>
 #include <QSlider>
 #include <QBoxLayout>
 #include <QVBoxLayout>
@@ -28,7 +28,7 @@
 #include "app/widgets/nav_neon_indicator.hpp"
 #include "app/widgets/nav_neon_resize_filter.hpp"
 #include "app/widgets/cpu_temp_widget.hpp"
-
+#include "app/widgets/control_bluetooth_button.hpp"
 
 Dash::NavRail::NavRail()
     : group()
@@ -290,6 +290,38 @@ void Dash::set_page(Page *page)
     this->transition_anim->start();
 }
 
+void Dash::open_settings_bluetooth()
+{
+    Page *settingsPage = nullptr;
+
+    for (auto p : this->arbiter.layout().pages()) {
+        if (p && p->name() == "Settings") {
+            settingsPage = p;
+            break;
+        }
+    }
+
+    if (!settingsPage)
+        return;
+
+    this->set_page(settingsPage);
+
+    auto cont = settingsPage->container();
+    if (!cont || !cont->layout() || cont->layout()->count() < 1)
+        return;
+
+    QWidget *inner = cont->layout()->itemAt(0)->widget();
+    auto tabs = qobject_cast<QTabWidget*>(inner);
+    if (!tabs)
+        return;
+
+    for (int i = 0; i < tabs->count(); ++i) {
+        if (tabs->tabText(i).contains("Bluetooth", Qt::CaseInsensitive)) {
+            tabs->setCurrentIndex(i);
+            break;
+        }
+    }
+}
 
 
 QWidget *Dash::status_bar() const
@@ -332,176 +364,13 @@ QWidget *Dash::control_bar() const
 
     layout->addStretch();
 
-    auto bluetooth = new QPushButton();
-    bluetooth->setFlat(true);
-    bluetooth->setToolTip("Bluetooth");
-    this->arbiter.forge().iconize("bluetooth_control", bluetooth, 32);
+    auto bluetooth = new ControlBluetoothButton(this->arbiter, widget, 32);
     layout->addWidget(bluetooth);
-    bluetooth->setObjectName("ControlBluetooth");
-    bluetooth->setProperty("bt_state", "idle");
 
-    bluetooth->setProperty("bt_pulse", 0);
-
-    auto pulseTimer = new QTimer(bluetooth);
-    pulseTimer->setInterval(500);  // 400–700ms feels good
-    pulseTimer->setSingleShot(false);
-
-    connect(pulseTimer, &QTimer::timeout, bluetooth, [bluetooth]{
-    const int v = bluetooth->property("bt_pulse").toInt();
-    bluetooth->setProperty("bt_pulse", v ? 0 : 1);
-
-    // Re-apply stylesheet so the property change takes effect
-    bluetooth->style()->unpolish(bluetooth);
-    bluetooth->style()->polish(bluetooth);
-    bluetooth->update();
+    connect(bluetooth, &QPushButton::clicked, bluetooth, [this]{
+    // control_bar() is const in your class, so call the helper via const_cast
+    const_cast<Dash*>(this)->open_settings_bluetooth();
     });
-
-    auto scanning = std::make_shared<bool>(false);
-
-    auto apply_bt_state = [this, bluetooth, scanning, pulseTimer]() {
-    // Connected if ANY known device is connected
-    bool connected = false;
-    for (auto dev : this->arbiter.system().bluetooth.get_devices()) {
-        if (dev && dev->isConnected()) { connected = true; break; }
-    }
-
-    if (*scanning) {
-        this->arbiter.forge().iconize("bluetooth_control", bluetooth, 32);
-    } else if (connected) {
-        this->arbiter.forge().iconize("bluetooth_control_connected", bluetooth, 32);
-    } else {
-        this->arbiter.forge().iconize("bluetooth_control", bluetooth, 32);
-    }
-
-    const char *state =
-        (*scanning) ? "scanning" :
-        (connected) ? "connected" :
-                      "idle";
-
-    bluetooth->setProperty("bt_state", state);
-
-    // Force Qt to re-apply the stylesheet based on the new property
-    bluetooth->style()->unpolish(bluetooth);
-    bluetooth->style()->polish(bluetooth);
-    bluetooth->update();
-
-    if (*scanning) {
-    if (!pulseTimer->isActive())
-        pulseTimer->start();
-    } else {
-    if (pulseTimer->isActive())
-        pulseTimer->stop();
-
-    // reset pulse to off so it doesn't get stuck bright
-    bluetooth->setProperty("bt_pulse", 0);
-    }
-    };
-
-// Initial refresh once Bluetooth service finishes init
-connect(&this->arbiter.system().bluetooth, &Bluetooth::init, bluetooth, [apply_bt_state]() {
-    apply_bt_state();
-});
-
-// Scanning status
-connect(&this->arbiter.system().bluetooth, &Bluetooth::scan_status, bluetooth, [scanning, apply_bt_state](bool status) {
-    *scanning = status;
-    apply_bt_state();
-});
-
-// Device connection changes
-connect(&this->arbiter.system().bluetooth, &Bluetooth::device_added, bluetooth, [apply_bt_state](BluezQt::DevicePtr) {
-    apply_bt_state();
-});
-connect(&this->arbiter.system().bluetooth, &Bluetooth::device_changed, bluetooth, [apply_bt_state](BluezQt::DevicePtr) {
-    apply_bt_state();
-});
-connect(&this->arbiter.system().bluetooth, &Bluetooth::device_removed, bluetooth, [apply_bt_state](BluezQt::DevicePtr) {
-    apply_bt_state();
-});
-
-// Media player device changes (also indicates a “connected media device”)
-connect(&this->arbiter.system().bluetooth, &Bluetooth::media_player_changed, bluetooth, [apply_bt_state](QString, BluezQt::MediaPlayerPtr) {
-    apply_bt_state();
-});
-
-// Run once now (best effort)
-apply_bt_state();
-
-// ---- Long-press tooltip (connection / scanning info) ----
-auto build_bt_tooltip = [this, scanning]() -> QString {
-    QStringList connectedNames;
-
-    for (auto dev : this->arbiter.system().bluetooth.get_devices()) {
-        if (dev && dev->isConnected())
-            connectedNames << dev->name();
-    }
-
-    QString tip = "Bluetooth\n";
-
-    if (*scanning)
-        tip += "Scanning: yes\n";
-    else
-        tip += "Scanning: no\n";
-
-    if (connectedNames.isEmpty()) {
-        tip += "Connected: none";
-    } else {
-        tip += "Connected: " + connectedNames.join(", ");
-    }
-
-    return tip;
-};
-
-// Press-and-hold to show tooltip (touch-friendly)
-connect(bluetooth, &QPushButton::pressed, bluetooth, [bluetooth, build_bt_tooltip]{
-    QTimer::singleShot(550, bluetooth, [bluetooth, build_bt_tooltip]{
-        if (!bluetooth->isDown())
-            return;
-
-        const QString tip = build_bt_tooltip();
-        const QPoint pos = bluetooth->mapToGlobal(QPoint(bluetooth->width() / 2, 0));
-        QToolTip::showText(pos, tip, bluetooth);
-    });
-});
-
-// Hide tooltip when released
-connect(bluetooth, &QPushButton::released, bluetooth, []{
-    QToolTip::hideText();
-});
-
-connect(bluetooth, &QPushButton::clicked, [this]{
-    Page *settingsPage = nullptr;
-
-    for (auto p : this->arbiter.layout().pages()) {
-        if (p && p->name() == "Settings") {
-            settingsPage = p;
-            break;
-        }
-    }
-    if (!settingsPage) return;
-
-    auto dash = const_cast<Dash*>(this);
-    dash->set_page(settingsPage);
-QTimer::singleShot(50, dash, [settingsPage]{
-    // Page::container() is a PageContainer (QFrame) wrapping the real page widget
-    auto cont = settingsPage->container();
-    if (!cont || !cont->layout() || cont->layout()->count() < 1)
-        return;
-
-    QWidget *inner = cont->layout()->itemAt(0)->widget();
-    auto tabs = qobject_cast<QTabWidget*>(inner);
-    if (!tabs)
-        return;
-
-    for (int i = 0; i < tabs->count(); ++i) {
-        if (tabs->tabText(i).contains("Bluetooth", Qt::CaseInsensitive)) {
-            tabs->setCurrentIndex(i);
-            break;
-        }
-    }
-});
-
-});
 
 
     auto dialog = new Dialog(this->arbiter, true, this->arbiter.window());
