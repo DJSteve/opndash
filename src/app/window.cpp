@@ -61,34 +61,29 @@ Dash::Body::Body()
     this->status_bar->setContentsMargins(0, 0, 0, 0);
     this->layout->addLayout(this->status_bar);
 
-// Frame widget that will actually paint the background
-this->frame_widget = new QWidget();
-this->frame_widget->setObjectName("DashFrame");
+    // Frame widget that will actually paint the background
+    this->frame_widget = new QWidget();
+    this->frame_widget->setObjectName("DashFrame");
 
-// Put the stacked layout onto that widget
-this->frame = new QStackedLayout(this->frame_widget);
-this->frame->setContentsMargins(0, 0, 0, 0);
+    // Put the stacked layout onto that widget
+    this->frame = new QStackedLayout(this->frame_widget);
+    this->frame->setContentsMargins(0, 0, 0, 0);
 
-// Add the widget (not the layout) to the main layout
-this->layout->addWidget(this->frame_widget, 1);
-
-//    this->frame->setContentsMargins(0, 0, 0, 0);
-//    this->layout->addLayout(this->frame, 1);
+    // Add the widget (not the layout) to the main layout
+    this->layout->addWidget(this->frame_widget, 1);
 
     auto msg_ref = new QWidget();
     msg_ref->setObjectName("MsgRef");
     this->layout->addWidget(msg_ref);
 
-this->control_bar_widget = new QWidget();
-this->control_bar_widget->setObjectName("ControlBar");
+    this->control_bar_widget = new QWidget();
+    this->control_bar_widget->setObjectName("ControlBar");
 
-this->control_bar = new QVBoxLayout(this->control_bar_widget);
-this->control_bar->setContentsMargins(0, 0, 0, 0);
+    this->control_bar = new QVBoxLayout(this->control_bar_widget);
+    this->control_bar->setContentsMargins(0, 0, 0, 0);
 
-this->layout->addWidget(this->control_bar_widget);
+    this->layout->addWidget(this->control_bar_widget);
 
-//    this->control_bar->setContentsMargins(0, 0, 0, 0);
-//    this->layout->addLayout(this->control_bar);
 }
 
 Dash::Dash(Arbiter &arbiter)

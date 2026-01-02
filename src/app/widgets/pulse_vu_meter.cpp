@@ -74,68 +74,102 @@ void PulseVUMeter::paintEvent(QPaintEvent *)
     QPainter p(this);
     p.setRenderHint(QPainter::Antialiasing, true);
 
-const QRect outer = rect().adjusted(8, 6, -8, -6);
+    // Outer housing
+    const QRectF housing = rect().adjusted(6, 6, -6, -6);
 
-// Two columns with a small gap
-const int gapCols = 6;
-const int colW = (outer.width() - gapCols) / 2;
+    // "Glass" background (cheap to draw, big visual gain)
+    p.setPen(QPen(QColor(255, 255, 255, 25), 1));
+    p.setBrush(QColor(0, 0, 0, 90));
+    p.drawRoundedRect(housing, 14, 14);
 
-QRect rL(outer.left(), outer.top(), colW, outer.height());
-QRect rR(outer.left() + colW + gapCols, outer.top(), colW, outer.height());
+    // Leave room INSIDE the widget for the L/R labels at the bottom
+    const int labelH = 16;
+    const QRect outer = housing.toRect().adjusted(8, 8, -8, -(10 + labelH));
 
-// LED segments
-const int segments = 14;
-const int gap = 3;
-const int segH = (outer.height() - gap * (segments - 1)) / segments;
+    // Two columns with a small gap + divider line
+    const int gapCols = 10;
+    const int colW = (outer.width() - gapCols) / 2;
 
-// theme gradient: low cyan -> mid purple -> high red
-const QColor low( 60, 230, 255, 220);
-const QColor mid(160,  80, 255, 220);
-const QColor high(255,  80,  80, 230);
+    QRect rL(outer.left(), outer.top(), colW, outer.height());
+    QRect rR(outer.left() + colW + gapCols, outer.top(), colW, outer.height());
 
-auto lerp = [](const QColor &a, const QColor &b, float t){
-    t = qBound(0.f, t, 1.f);
-    return QColor(
-        a.red()   + (b.red()   - a.red())   * t,
-        a.green() + (b.green() - a.green()) * t,
-        a.blue()  + (b.blue()  - a.blue())  * t,
-        a.alpha() + (b.alpha() - a.alpha()) * t
-    );
-};
+    // Divider glow (subtle)
+    const int divX = outer.left() + colW + (gapCols / 2);
+    p.setPen(QPen(QColor(160, 80, 255, 70), 2));
+    p.drawLine(divX, outer.top(), divX, outer.bottom());
 
-auto drawColumn = [&](const QRect &r, float v, float peakHold){
-    v = qBound(0.f, v, 1.f);
-    const int lit = qRound(v * segments);
+    // LED segments
+    const int segments = 18;   // a bit denser = more "pro"
+    const int gap = 3;
+    const int segH = (outer.height() - gap * (segments - 1)) / segments;
 
-    for (int i = 0; i < segments; ++i) {
-        const int idxFromBottom = i;
-        const int y = r.bottom() - (idxFromBottom + 1) * segH - idxFromBottom * gap;
+    // theme gradient: low cyan -> mid purple -> high red
+    const QColor low( 60, 230, 255, 220);
+    const QColor mid(160,  80, 255, 220);
+    const QColor high(255,  80,  80, 230);
 
-        QRect seg(r.left(), y, r.width(), segH);
+    auto lerpC = [](const QColor &a, const QColor &b, float t){
+        t = qBound(0.f, t, 1.f);
+        return QColor(
+            a.red()   + (b.red()   - a.red())   * t,
+            a.green() + (b.green() - a.green()) * t,
+            a.blue()  + (b.blue()  - a.blue())  * t,
+            a.alpha() + (b.alpha() - a.alpha()) * t
+        );
+    };
 
-        const bool on = (idxFromBottom < lit);
-
+    auto segColorFor = [&](int idxFromBottom){
         const float ht = (float)idxFromBottom / (segments - 1); // 0 bottom .. 1 top
-        QColor c = (ht < 0.5f) ? lerp(low, mid, ht * 2.f)
-                               : lerp(mid, high, (ht - 0.5f) * 2.f);
+        return (ht < 0.5f) ? lerpC(low, mid, ht * 2.f)
+                           : lerpC(mid, high, (ht - 0.5f) * 2.f);
+    };
 
-        if (!on) c.setAlpha(45);
+    auto drawColumn = [&](const QRect &r, float v, float peakHold){
+        v = qBound(0.f, v, 1.f);
+        const int lit = qRound(v * segments);
 
-        p.setPen(Qt::NoPen);
-        p.setBrush(c);
-        p.drawRoundedRect(seg, 4, 4);
-    }
+        // LEDs
+        for (int i = 0; i < segments; ++i) {
+            const int idxFromBottom = i;
+            const int y = r.bottom() - (idxFromBottom + 1) * segH - idxFromBottom * gap;
+            QRect seg(r.left(), y, r.width(), segH);
 
-    // Peak marker line
-    const int peakIdx = qBound(0, (int)qRound(peakHold * segments), segments);
-    if (peakIdx > 0) {
-        const int idxFromBottom = peakIdx - 1;
-        const int y = r.bottom() - (idxFromBottom + 1) * segH - idxFromBottom * gap;
-        p.setPen(QPen(QColor(230, 200, 255, 180), 2));
-        p.drawLine(r.left(), y, r.right(), y);
-    }
-};
+            QColor c = segColorFor(idxFromBottom);
 
-drawColumn(rL, displayL_, peakHoldL_);
-drawColumn(rR, displayR_, peakHoldR_);
+            const bool on = (idxFromBottom < lit);
+            if (!on) c.setAlpha(40); // darker "off" LEDs
+
+            p.setPen(Qt::NoPen);
+            p.setBrush(c);
+            p.drawRoundedRect(seg, 4, 4);
+        }
+
+        // Peak DOT (more like mixer panels than a full line)
+        const int peakIdx = qBound(0, (int)qRound(peakHold * segments), segments);
+        if (peakIdx > 0) {
+            const int idxFromBottom = peakIdx - 1;
+            const int y = r.bottom() - (idxFromBottom + 1) * segH - idxFromBottom * gap;
+            const QColor pc = segColorFor(idxFromBottom);
+
+            p.setPen(Qt::NoPen);
+            p.setBrush(QColor(pc.red(), pc.green(), pc.blue(), 240));
+
+            const int dot = qMax(6, qMin(r.width() / 2, 10));
+            QRectF d(r.center().x() - dot/2.0, y + segH/2.0 - dot/2.0, dot, dot);
+            p.drawEllipse(d);
+        }
+    };
+
+    drawColumn(rL, displayL_, peakHoldL_);
+    drawColumn(rR, displayR_, peakHoldR_);
+
+    // L / R tiny labels at the bottom (cheap, improves readability)
+    p.setPen(QColor(220, 200, 255, 140));
+    QFont f = p.font();
+    f.setPointSizeF(f.pointSizeF() * 0.85);
+    f.setBold(true);
+    p.setFont(f);
+
+    p.drawText(QRect(rL.left(), rL.bottom() + 2, rL.width(), 14), Qt::AlignHCenter | Qt::AlignTop, "L");
+    p.drawText(QRect(rR.left(), rR.bottom() + 2, rR.width(), 14), Qt::AlignHCenter | Qt::AlignTop, "R");
 }

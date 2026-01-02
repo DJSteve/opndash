@@ -36,25 +36,30 @@ void Dash::build_nav_rail_and_pages()
         button->setVisible(page->enabled());
     }
 
-    	// ---- VU meter (below page buttons) ----
-    	auto vu = new PulseVUMeter(this->rail.widget);
-    	vu->setObjectName("rail_vu_meter");
-    	vu->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
-    	vu->setMinimumHeight(200);
+    // ---- VU meter (below page buttons) ----
+    auto vu = new PulseVUMeter(this->rail.widget);
+    vu->setObjectName("rail_vu_meter");
+
+
+	/* Allow the VU meter to grow vertically */
+	vu->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
 	/* Give it stretch so it fills space between nav buttons and volume */
-	rail.layout->addWidget(vu, 1, Qt::AlignHCenter);
+	rail.layout->addWidget(vu, 1);
 
-    	auto railVol = new RailVolume(this->arbiter, this->rail.widget);
-    	this->rail.layout->addWidget(railVol, 0, Qt::AlignHCenter);
+    // push volume widget to the bottom
+    this->rail.layout->addStretch(1);
 
-    	// set initial page
-    	this->set_page(this->arbiter.layout().curr_page);
+    auto railVol = new RailVolume(this->arbiter, this->rail.widget);
+    this->rail.layout->addWidget(railVol, 0, Qt::AlignHCenter);
 
-    	// Snap neon indicator to current page on boot (no animation)
-    	if (this->nav_neon) {
+    // set initial page
+    this->set_page(this->arbiter.layout().curr_page);
+
+    // Snap neon indicator to current page on boot (no animation)
+    if (this->nav_neon) {
         int id = this->arbiter.layout().page_id(this->arbiter.layout().curr_page);
         if (auto b = this->rail.group.button(id))
             this->nav_neon->moveToButton(b, false);
-    	}
+    }
 }
