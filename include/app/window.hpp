@@ -24,7 +24,13 @@ class NavNeonIndicator;
 
 class QGraphicsOpacityEffect;
 class QPropertyAnimation;
+// Forward declare for moc: Dash + Page types and the transition function
+class Dash;
+class Page;
 
+namespace Ui {
+    void transition_to_page(Dash *dash, Page *page);
+}
 
 
 class Dash : public QWidget {
@@ -69,10 +75,12 @@ class Dash : public QWidget {
     QPropertyAnimation *transition_anim = nullptr;
     bool transitioning = false;
     Page *pending_page = nullptr;
+    friend void ::Ui::transition_to_page(Dash *dash, Page *page);
     NavNeonIndicator *nav_neon = nullptr;
 
 
     void set_page(Page *page);
+    void build_nav_rail_and_pages();
     void open_settings_bluetooth();
 
     // init helpers (moved out of window.cpp)

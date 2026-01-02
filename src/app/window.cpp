@@ -32,6 +32,7 @@
 #include "app/widgets/control_power_button.hpp"
 #include "app/ui/control_bar_builder.hpp"
 #include "app/ui/status_bar_builder.hpp"
+#include "app/ui/transition_manager.hpp"
 
 
 Dash::NavRail::NavRail()
@@ -149,48 +150,7 @@ void Dash::init()
 
     this->ensure_nav_neon();
 
-    for (auto page : this->arbiter.layout().pages()) {
-        auto button = page->button();
-        button->setCheckable(true);
-        button->setFlat(true);
-
-	button->setMinimumSize(56, 56);
-	button->setMaximumSize(56, 56);
-	button->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-
-        QIcon icon(new StylizedIconEngine(this->arbiter, QString(":/icons/%1.svg").arg(page->icon_name()), true));
-        this->arbiter.forge().iconize(icon, button, 32);
-
-        this->rail.group.addButton(button, this->arbiter.layout().page_id(page));
-        this->rail.layout->addWidget(button);
-        this->body.frame->addWidget(page->container());
-
-        page->init();
-        button->setVisible(page->enabled());
-    }
-
-	// ---- VU meter (below page buttons) ----
-	auto vu = new PulseVUMeter(this->rail.widget);
-	vu->setFixedWidth(64);
-	vu->setFixedHeight(540);
-	this->rail.layout->addWidget(vu, 0, Qt::AlignHCenter);
-	this->rail.layout->addSpacing(10);
-
-	// (optional) if you need the volume widget pinned to bottom:
-	this->rail.layout->addStretch(1);
-
-	auto railVol = new RailVolume(this->arbiter, this->rail.widget);
-
-	this->rail.layout->addWidget(railVol, 0, Qt::AlignHCenter);
-
-	this->set_page(this->arbiter.layout().curr_page);
-
-	// Snap indicator to current page on boot
-	if (this->nav_neon) {
-	    int id = this->arbiter.layout().page_id(this->arbiter.layout().curr_page);
-    	if (auto b = this->rail.group.button(id))
-        	this->nav_neon->moveToButton(b, false);
-	}
+    this->build_nav_rail_and_pages();
 
     this->body.control_bar->addWidget(this->control_bar());
 
@@ -199,75 +159,22 @@ void Dash::init()
 
 void Dash::set_page(Page *page)
 {
+    if (!page) return;
+
     auto id = this->arbiter.layout().page_id(page);
 
     if (auto b = this->rail.group.button(id)) {
-    	b->setChecked(true);
+        b->setChecked(true);
 
-    	if (this->nav_neon) {
-        	this->nav_neon->moveToButton(b, true); // animate to active button
-    	}
+        if (this->nav_neon) {
+            this->nav_neon->moveToButton(b, true); // animate to active button
+        }
     }
 
-    QWidget *target = page->container();
-    QWidget *current = this->body.frame->currentWidget();
-    if (current == target)
-        return;
-
-    // If transition system isn't ready, just switch
-    if (!this->transition_overlay || !this->transition_fx || !this->transition_anim) {
-        this->body.frame->setCurrentWidget(target);
-        return;
-    }
-
-    // Queue if we are mid-transition
-    if (this->transitioning) {
-        this->pending_page = page;
-        return;
-    }
-
-    this->transitioning = true;
-    this->pending_page = nullptr;
-
-    // Ensure overlay covers the frame (handles fullscreen/resizes)
-    this->transition_overlay->setGeometry(this->body.frame_widget->rect());
-    this->transition_overlay->show();
-    this->transition_overlay->raise();
-
-    // Stop any previous run cleanly
-    this->transition_anim->stop();
-    QObject::disconnect(this->transition_anim, nullptr, nullptr, nullptr);
-
-    // Phase 1: fade overlay IN to cover
-    this->transition_anim->setStartValue(0.0);
-    this->transition_anim->setEndValue(1.0);
-
-    QObject::connect(this->transition_anim, &QPropertyAnimation::finished, this, [this, page]() {
-        // Switch while fully covered (no ghosting / no OpenGL effect crashes)
-        this->body.frame->setCurrentWidget(page->container());
-
-        // Phase 2: fade overlay OUT to reveal
-        this->transition_anim->stop();
-        QObject::disconnect(this->transition_anim, nullptr, nullptr, nullptr);
-        this->transition_anim->setStartValue(1.0);
-        this->transition_anim->setEndValue(0.0);
-
-        QObject::connect(this->transition_anim, &QPropertyAnimation::finished, this, [this]() {
-            this->transition_overlay->hide();
-            this->transitioning = false;
-
-            if (this->pending_page) {
-                Page *next = this->pending_page;
-                this->pending_page = nullptr;
-                this->set_page(next);
-            }
-        });
-
-        this->transition_anim->start();
-    });
-
-    this->transition_anim->start();
+    // All page switching + overlay transition handled here:
+    Ui::transition_to_page(this, page);
 }
+
 
 Arbiter &Dash::get_arbiter()
 {
