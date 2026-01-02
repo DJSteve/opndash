@@ -15,7 +15,7 @@ PulseVUMeter::PulseVUMeter(QWidget *parent)
 
     // 20 FPS redraw + decay = smooth enough, cheap enough
     tick_ = new QTimer(this);
-    tick_->setInterval(50);
+    tick_->setInterval(33);
     connect(tick_, &QTimer::timeout, this, [this]{
 
 	const float tL = levelL_.load(std::memory_order_relaxed);
@@ -23,8 +23,8 @@ PulseVUMeter::PulseVUMeter(QWidget *parent)
 
 	// smoothing (fast rise, slow fall)
 	auto smooth = [](float target, float current){
-    	if (target > current) return current * 0.65f + target * 0.35f;
-    		return current * 0.92f + target * 0.08f;
+    	if (target > current) return current * 0.50f + target * 0.50f;
+    		return current * 0.85f + target * 0.15f;
 	};
 
 	displayL_ = smooth(tL, displayL_);

@@ -34,7 +34,7 @@ float peakHoldR_{0.0f};
 int clipTicksL_{0};
 int clipTicksR_{0};
 static constexpr float kClipThreshold = 0.98f;
-static constexpr int kClipHoldTicks = 16; // 16 * 50ms ≈ 800ms
+static constexpr int kClipHoldTicks = 48; // 16 * 50ms ≈ 800ms
 
     QTimer *tick_ = nullptr;
 
