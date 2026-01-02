@@ -72,8 +72,13 @@ class Dash : public QWidget {
     NavNeonIndicator *nav_neon = nullptr;
 
 
-void set_page(Page *page);
-void open_settings_bluetooth();
+    void set_page(Page *page);
+    void open_settings_bluetooth();
+
+    // init helpers (moved out of window.cpp)
+    void ensure_transition_overlay();
+    void ensure_nav_neon();
+
     QWidget *status_bar() const;
     QWidget *control_bar() const;
 };
