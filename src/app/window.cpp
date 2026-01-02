@@ -29,6 +29,9 @@
 #include "app/widgets/nav_neon_resize_filter.hpp"
 #include "app/widgets/cpu_temp_widget.hpp"
 #include "app/widgets/control_bluetooth_button.hpp"
+#include "app/widgets/control_power_button.hpp"
+#include "app/ui/control_bar_builder.hpp"
+
 
 Dash::NavRail::NavRail()
     : group()
@@ -290,6 +293,17 @@ void Dash::set_page(Page *page)
     this->transition_anim->start();
 }
 
+Arbiter &Dash::get_arbiter()
+{
+    return this->arbiter;
+}
+
+void Dash::open_settings_bluetooth_public()
+{
+    this->open_settings_bluetooth();
+}
+
+
 void Dash::open_settings_bluetooth()
 {
     Page *settingsPage = nullptr;
@@ -351,74 +365,13 @@ QWidget *Dash::status_bar() const
     return widget;
 }
 
+
 QWidget *Dash::control_bar() const
 {
-    auto widget = new QWidget();
-    widget->setObjectName("ControlBar");
-    auto layout = new QHBoxLayout(widget);
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->setSpacing(0);
-
-    auto cpuTemp = new CpuTempWidget(widget);
-    layout->addWidget(cpuTemp);
-
-    layout->addStretch();
-
-    auto bluetooth = new ControlBluetoothButton(this->arbiter, widget, 32);
-    layout->addWidget(bluetooth);
-
-    connect(bluetooth, &QPushButton::clicked, bluetooth, [this]{
-    // control_bar() is const in your class, so call the helper via const_cast
-    const_cast<Dash*>(this)->open_settings_bluetooth();
-    });
-
-
-    auto dialog = new Dialog(this->arbiter, true, this->arbiter.window());
-    dialog->set_title("Power Off");
-    dialog->set_body(this->power_control());
-    auto shutdown = new QPushButton();
-    shutdown->setFlat(true);
-    this->arbiter.forge().iconize("power_settings_new", shutdown, 32);
-    layout->addWidget(shutdown);
-    connect(shutdown, &QPushButton::clicked, [dialog]{ dialog->open(); });
-
-    widget->setVisible(this->arbiter.layout().control_bar.enabled);
-    connect(&this->arbiter, &Arbiter::control_bar_changed, [widget](bool enabled){
-        widget->setVisible(enabled);
-    });
-
-    return widget;
+    // Ui builder expects non-const Dash because it connects to helpers like open_settings_bluetooth()
+    return Ui::build_control_bar(const_cast<Dash*>(this));
 }
 
-QWidget *Dash::power_control() const
-{
-    auto widget = new QWidget();
-    auto layout = new QHBoxLayout(widget);
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->setSpacing(0);
-
-    auto restart = new QPushButton();
-    restart->setFlat(true);
-    this->arbiter.forge().iconize("refresh", restart, 36);
-    connect(restart, &QPushButton::clicked, [this]{
-        this->arbiter.settings().sync();
-        sync();
-        system(Session::System::REBOOT_CMD);
-    });
-    layout->addWidget(restart);
-
-    auto power_off = new QPushButton();
-    power_off->setFlat(true);
-    this->arbiter.forge().iconize("power_settings_new", power_off, 36);
-    connect(power_off, &QPushButton::clicked, [this]{
-        this->arbiter.settings().sync();
-        sync();
-        system(Session::System::SHUTDOWN_CMD);
-    });
-    layout->addWidget(power_off);
-
-    return widget;
-}
 
 MainWindow::MainWindow(QRect geometry)
     : QMainWindow()

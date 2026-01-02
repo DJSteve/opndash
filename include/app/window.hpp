@@ -34,6 +34,9 @@ class Dash : public QWidget {
    public:
     Dash(Arbiter &arbiter);
     void init();
+    Arbiter &get_arbiter();
+    void open_settings_bluetooth_public();
+
 
    private:
     struct NavRail {
@@ -59,7 +62,7 @@ class Dash : public QWidget {
     NavRail rail;
     Body body;
 
-    
+
     // Transition overlay (safe across OpenGL/video pages)
     QWidget *transition_overlay = nullptr;
     QGraphicsOpacityEffect *transition_fx = nullptr;
@@ -73,7 +76,6 @@ void set_page(Page *page);
 void open_settings_bluetooth();
     QWidget *status_bar() const;
     QWidget *control_bar() const;
-    QWidget *power_control() const;
 };
 
 class MainWindow : public QMainWindow {
