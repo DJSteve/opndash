@@ -31,6 +31,7 @@
 #include "app/widgets/control_bluetooth_button.hpp"
 #include "app/widgets/control_power_button.hpp"
 #include "app/ui/control_bar_builder.hpp"
+#include "app/ui/status_bar_builder.hpp"
 
 
 Dash::NavRail::NavRail()
@@ -340,29 +341,7 @@ void Dash::open_settings_bluetooth()
 
 QWidget *Dash::status_bar() const
 {
-    auto widget = new QWidget();
-    widget->setObjectName("StatusBar");
-
-    widget->setAttribute(Qt::WA_StyledBackground, true);
-    auto layout = new QHBoxLayout(widget);
-    layout->setContentsMargins(0, 0, 0, 0);
-    layout->setSpacing(0);
-
-    auto clock = new QLabel();
-    clock->setFont(this->arbiter.forge().font(10, true));
-    clock->setAlignment(Qt::AlignCenter);
-    layout->addWidget(clock);
-
-    connect(&this->arbiter.system().clock, &Clock::ticked, [clock](QTime time){
-        clock->setText(QLocale().toString(time, QLocale::ShortFormat));
-    });
-
-    widget->setVisible(this->arbiter.layout().status_bar);
-    connect(&this->arbiter, &Arbiter::status_bar_changed, [widget](bool enabled){
-        widget->setVisible(enabled);
-    });
-
-    return widget;
+    return Ui::build_status_bar(const_cast<Dash*>(this));
 }
 
 
