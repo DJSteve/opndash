@@ -66,19 +66,24 @@ void AlsaLevel::run()
 
         const size_t samples = (size_t)frames * 2;
 
-double sumL = 0.0;
-double sumR = 0.0;
+double sumL = 0.0, sumR = 0.0;
+int maxAbsL = 0;
+int maxAbsR = 0;
 
 for (size_t i = 0; i + 1 < samples; i += 2) {
-    const int l = buf[i];
-    const int r = buf[i + 1];
+    const int sL = (int)buf[i];
+    const int sR = (int)buf[i + 1];
 
-    const double lf = (double)l / 32768.0;
-    const double rf = (double)r / 32768.0;
+    maxAbsL = std::max(maxAbsL, std::abs(sL));
+    maxAbsR = std::max(maxAbsR, std::abs(sR));
 
-    sumL += lf * lf;
-    sumR += rf * rf;
+    const double l = sL / 32768.0;
+    const double r = sR / 32768.0;
+
+    sumL += l * l;
+    sumR += r * r;
 }
+
 
 const size_t framesCount = (size_t)frames;
 const float rmsL = (framesCount > 0) ? (float)std::sqrt(sumL / (double)framesCount) : 0.f;
@@ -94,6 +99,10 @@ if (lvlL < 0.f) lvlL = 0.f;
 if (lvlR < 0.f) lvlR = 0.f;
 
 emit level(lvlL, lvlR);
+// Treat "near full-scale" as clip
+const bool clipL = (maxAbsL >= 32000);
+const bool clipR = (maxAbsR >= 32000);
+emit clip(clipL, clipR);
 
     }
 

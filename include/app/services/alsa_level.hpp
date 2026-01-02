@@ -15,6 +15,7 @@ public:
 
 signals:
     void level(float left, float right); // 0..1 each
+    void clip(bool left, bool right);
 
 private:
     std::atomic<bool> running_{false};

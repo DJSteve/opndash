@@ -18,21 +18,23 @@ PulseVUMeter::PulseVUMeter(QWidget *parent)
     tick_->setInterval(50);
     connect(tick_, &QTimer::timeout, this, [this]{
 
-const float tL = levelL_.load(std::memory_order_relaxed);
-const float tR = levelR_.load(std::memory_order_relaxed);
+	const float tL = levelL_.load(std::memory_order_relaxed);
+	const float tR = levelR_.load(std::memory_order_relaxed);
 
-// smoothing (fast rise, slow fall)
-auto smooth = [](float target, float current){
-    if (target > current) return current * 0.65f + target * 0.35f;
-    return current * 0.92f + target * 0.08f;
-};
+	// smoothing (fast rise, slow fall)
+	auto smooth = [](float target, float current){
+    	if (target > current) return current * 0.65f + target * 0.35f;
+    		return current * 0.92f + target * 0.08f;
+	};
 
-displayL_ = smooth(tL, displayL_);
-displayR_ = smooth(tR, displayR_);
+	displayL_ = smooth(tL, displayL_);
+	displayR_ = smooth(tR, displayR_);
 
-peakHoldL_ = qMax(peakHoldL_ * 0.97f, displayL_);
-peakHoldR_ = qMax(peakHoldR_ * 0.97f, displayR_);
+	peakHoldL_ = qMax(peakHoldL_ * 0.97f, displayL_);
+	peakHoldR_ = qMax(peakHoldR_ * 0.97f, displayR_);
 
+	    if (clipTicksL_ > 0) --clipTicksL_;
+	    if (clipTicksR_ > 0) --clipTicksR_;
 
         update();
     });
@@ -55,8 +57,17 @@ void PulseVUMeter::setLevel(float left, float right)
     right = qBound(0.f, right, 1.f);
     levelL_.store(left, std::memory_order_relaxed);
     levelR_.store(right, std::memory_order_relaxed);
+
+    // CLIP latch (held for a short time)
+    if (left >= kClipThreshold)  clipTicksL_ = kClipHoldTicks;
+    if (right >= kClipThreshold) clipTicksR_ = kClipHoldTicks;
 }
 
+void PulseVUMeter::onClip(bool left, bool right)
+{
+    if (left)  clipTicksL_ = kClipHoldTicks;
+    if (right) clipTicksR_ = kClipHoldTicks;
+}
 
 static QColor lerp(const QColor &a, const QColor &b, float t)
 {
@@ -124,7 +135,9 @@ void PulseVUMeter::paintEvent(QPaintEvent *)
                            : lerpC(mid, high, (ht - 0.5f) * 2.f);
     };
 
-    auto drawColumn = [&](const QRect &r, float v, float peakHold){
+    //auto drawColumn = [&](const QRect &r, float v, float peakHold){
+    auto drawColumn = [&](const QRect &r, float v, float peakHold, bool clipOn){
+
         v = qBound(0.f, v, 1.f);
         const int lit = qRound(v * segments);
 
@@ -158,18 +171,16 @@ void PulseVUMeter::paintEvent(QPaintEvent *)
             QRectF d(r.center().x() - dot/2.0, y + segH/2.0 - dot/2.0, dot, dot);
             p.drawEllipse(d);
         }
+	// CLIP indicator (latched briefly)
+	if (clipOn) {
+    		p.setPen(Qt::NoPen);
+    		p.setBrush(QColor(255, 60, 120, 230)); // neon-ish pink/red
+    		const int w = qMax(6, r.width() - 2);
+    		QRect clipRect(r.center().x() - w/2, r.top() + 2, w, 6);
+    		p.drawRoundedRect(clipRect, 3, 3);
+	}
     };
 
-    drawColumn(rL, displayL_, peakHoldL_);
-    drawColumn(rR, displayR_, peakHoldR_);
-
-    // L / R tiny labels at the bottom (cheap, improves readability)
-    p.setPen(QColor(220, 200, 255, 140));
-    QFont f = p.font();
-    f.setPointSizeF(f.pointSizeF() * 0.85);
-    f.setBold(true);
-    p.setFont(f);
-
-    p.drawText(QRect(rL.left(), rL.bottom() + 2, rL.width(), 14), Qt::AlignHCenter | Qt::AlignTop, "L");
-    p.drawText(QRect(rR.left(), rR.bottom() + 2, rR.width(), 14), Qt::AlignHCenter | Qt::AlignTop, "R");
+drawColumn(rL, displayL_, peakHoldL_, clipTicksL_ > 0);
+drawColumn(rR, displayR_, peakHoldR_, clipTicksR_ > 0);
 }
