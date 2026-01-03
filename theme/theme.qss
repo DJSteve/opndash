@@ -244,3 +244,34 @@ QPushButton#ControlBluetooth[bt_state="scanning"][bt_pulse="1"] {
     background: rgba(90, 230, 255, 35);
     color: rgba(255, 255, 255, 235);
 }
+
+#LocalSourceBar {
+    border-radius: 14px;
+    background: rgba(0,0,0,60);
+    border: 1px solid rgba(180,120,255,35);
+}
+
+#LocalSourceLabel {
+    color: rgba(230,220,255,200);
+    font-weight: 600;
+}
+
+#LocalSourceCombo {
+    padding: 6px 10px;
+    border-radius: 10px;
+    background: rgba(0,0,0,80);
+    border: 1px solid rgba(90,230,255,45);
+    color: rgba(240,240,255,220);
+}
+
+#LocalRescanButton {
+    padding: 6px 12px;
+    border-radius: 10px;
+    background: rgba(90,230,255,25);
+    border: 1px solid rgba(90,230,255,45);
+    color: rgba(240,240,255,230);
+    font-weight: 700;
+}
+#LocalRescanButton:pressed {
+    background: rgba(90,230,255,40);
+}

@@ -7,6 +7,10 @@
 #include <QListWidget>
 #include <QListWidgetItem>
 #include <QMediaPlaylist>
+#include <QComboBox>
+#include <QPushButton>
+#include <QDirIterator>
+#include <QFileInfoList>
 
 #include "app/window.hpp"
 #include "app/pages/media.hpp"
@@ -176,6 +180,34 @@ LocalPlayerTab::LocalPlayerTab(Arbiter &arbiter, QWidget *parent)
     layout->addWidget(this->controls_widget());
 }
 
+static QString first_mount_under(const QString &root)
+{
+    QDir d(root);
+    if (!d.exists()) return QString();
+
+    // Choose the first directory that isn't hidden
+    QFileInfoList dirs = d.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+    for (const auto &fi : dirs) {
+        if (fi.isDir())
+            return fi.absoluteFilePath();
+    }
+    return QString();
+}
+
+static QString find_usb_root()
+{
+    QDir d("/media");
+    if (d.exists()) {
+        // Prefer our automount naming: /media/usb-sda1, /media/usb-sdb1, etc.
+        QFileInfoList dirs = d.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+        for (const auto &fi : dirs) {
+            if (fi.isDir() && fi.fileName().startsWith("usb-"))
+                return fi.absoluteFilePath();
+        }
+    }
+    return QString();
+}
+
 QWidget *LocalPlayerTab::playlist_widget()
 {
     auto player = this->player;
@@ -215,6 +247,31 @@ QWidget *LocalPlayerTab::playlist_widget()
 
     layout->addWidget(now);
 
+    // --- SOURCE BAR (Internal / USB + Rescan) ---
+    auto sourceBar = new QFrame;
+    sourceBar->setObjectName("LocalSourceBar");
+    auto sb = new QHBoxLayout(sourceBar);
+    sb->setContentsMargins(14, 8, 14, 8);
+    sb->setSpacing(10);
+
+    auto sourceLabel = new QLabel("Source:");
+    sourceLabel->setObjectName("LocalSourceLabel");
+
+    auto sourceCombo = new QComboBox;
+    sourceCombo->setObjectName("LocalSourceCombo");
+    sourceCombo->addItem("Internal");
+    sourceCombo->addItem("USB");
+
+    auto rescan = new QPushButton("Rescan");
+    rescan->setObjectName("LocalRescanButton");
+
+    sb->addWidget(sourceLabel);
+    sb->addWidget(sourceCombo, 1);
+    sb->addWidget(rescan);
+
+    layout->addWidget(sourceBar);
+
+
     // --- TRACK LIST (single folder) ---
     QListWidget *tracks = new QListWidget;
     tracks->setObjectName("LocalTrackList");
@@ -222,11 +279,39 @@ QWidget *LocalPlayerTab::playlist_widget()
 
     layout->addWidget(tracks, 1);
 
+    auto reloadLibrary = [this, tracks, sourceCombo]() {
+    QString root;
+
+    if (sourceCombo->currentIndex() == 0) {
+        // Internal
+        root = this->config->get_media_home();
+    } else {
+        // USB
+        root = find_usb_root();
+        if (root.isEmpty()) {
+            // fallback to internal if no USB found
+            root = this->config->get_media_home();
+        }
+    }
+
+    this->populate_tracks(root, tracks);
+
+    // If something exists, highlight first track
+    if (tracks->count() > 0) {
+        tracks->setCurrentRow(0);
+    }
+    };
+
+
     // Load tracks from ONE folder only
-    const QString root_path = config->get_media_home();
-    tracks->clear();
-    player->playlist()->clear();
-    this->populate_tracks(root_path, tracks);
+    reloadLibrary();
+
+    QObject::connect(sourceCombo, QOverload<int>::of(&QComboBox::currentIndexChanged),
+                 this, [reloadLibrary](int){ reloadLibrary(); });
+
+    QObject::connect(rescan, &QPushButton::clicked,
+                 this, [reloadLibrary]{ reloadLibrary(); });
+
 
     // When user taps a track, play it
     QObject::connect(tracks, &QListWidget::currentRowChanged, this,
