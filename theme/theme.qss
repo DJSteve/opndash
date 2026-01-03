@@ -172,4 +172,23 @@ QPushButton#ControlBluetooth[bt_state="scanning"][bt_pulse="1"] {
     );
 }
 
+#NowPlaying {
+    border-radius: 12px;
+    background: rgba(0,0,0,90);
+    border: 1px solid rgba(180,120,255,40);
+}
+
+#NowPlaying[active="false"] {
+    border: 1px solid rgba(180,120,255,20);
+    background: rgba(0,0,0,50);
+}
+
+#NowPlayingTag {
+    color: rgba(90,230,255,220);
+    font-weight: 700;
+}
+
+#NowPlayingText {
+    color: rgba(230,220,255,210);
+}
 

@@ -71,10 +71,16 @@ QWidget *BluetoothPlayerTab::track_widget()
     QLabel *albumArt = new QLabel(widget);
     layout->addWidget(albumArt);
 
-    connect(&this->arbiter.system().bluetooth, &Bluetooth::media_player_track_changed, [artist, album, title](BluezQt::MediaPlayerTrack track){
+    connect(&this->arbiter.system().bluetooth, &Bluetooth::media_player_track_changed, [this, artist, album, title](BluezQt::MediaPlayerTrack track){
         artist->setText(track.artist());
         album->setText(track.album());
         title->setText(track.title());
+        const QString a = track.artist();
+        const QString t = track.title();
+        const QString np = (!a.isEmpty() && !t.isEmpty()) ? (a + " — " + t)
+                          : (!t.isEmpty() ? t : QString());
+        this->arbiter.set_now_playing("BT", np, !np.isEmpty());
+
     });
     connect(aa_handler, &AAHandler::aa_media_metadata_update, [artist, album, title, albumArt](const aasdk::proto::messages::MediaInfoChannelMetadataData& metadata){
         title->setText(QString::fromStdString(metadata.track_name()));
@@ -126,8 +132,12 @@ QWidget *BluetoothPlayerTab::controls_widget()
                 media_player->pause()->waitForFinished();
         }
     });
-    connect(&this->arbiter.system().bluetooth, &Bluetooth::media_player_status_changed, [play_button](BluezQt::MediaPlayer::Status status){
+    connect(&this->arbiter.system().bluetooth, &Bluetooth::media_player_status_changed, [this, play_button](BluezQt::MediaPlayer::Status status){
         play_button->setChecked(status == BluezQt::MediaPlayer::Status::Playing);
+        // If BT is stopped, dim the Now Playing strip (keep last text if you prefer)
+        if (status == BluezQt::MediaPlayer::Stopped) {
+            this->arbiter.set_now_playing("BT", "", false);
+        }
     });
     layout->addWidget(play_button);
 
@@ -195,9 +205,35 @@ QWidget *LocalPlayerTab::playlist_widget()
         player->playlist()->setCurrentIndex(tracks->row(item));
         player->play();
     });
-    connect(this->player->playlist(), &QMediaPlaylist::currentIndexChanged, [tracks](int idx) {
+    connect(this->player->playlist(), &QMediaPlaylist::currentIndexChanged, [this, tracks](int idx) {
         if (idx < 0) return;
         tracks->setCurrentRow(idx);
+	// Build "Artist — Title" from the current file if possible, else filename
+        const auto media = this->player->playlist()->currentMedia();
+        const QString path = media.canonicalUrl().toLocalFile();
+        QString np;
+
+        if (!path.isEmpty()) {
+            TagLib::FileRef f(path.toStdString().c_str());
+            if (!f.isNull() && f.tag()) {
+                TagLib::Tag *tag = f.tag();
+                const QString artist = QString::fromStdString(tag->artist().to8Bit(true));
+                const QString title  = QString::fromStdString(tag->title().to8Bit(true));
+
+                if (!artist.isEmpty() && !title.isEmpty())
+                    np = artist + " — " + title;
+                else if (!title.isEmpty())
+                    np = title;
+            }
+
+            if (np.isEmpty()) {
+                QFileInfo fi(path);
+                np = fi.completeBaseName();
+            }
+        }
+
+        this->arbiter.set_now_playing("LOCAL", np, !np.isEmpty());
+
     });
     connect(folders, &QListWidget::itemClicked, [this, folders, tracks, home_button](QListWidgetItem *item) {
         if (!item->isSelected()) return;

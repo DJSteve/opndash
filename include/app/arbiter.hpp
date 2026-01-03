@@ -30,6 +30,7 @@ class Arbiter : public QObject {
     void set_curr_quick_view(int id);
     void set_curr_page(Page *page);
     void set_curr_page(int id);
+    void set_now_playing(const QString &source, const QString &text, bool active = true);
     void set_page(Page *page, bool enabled);
     void set_fullscreen(bool fullscreen);
     void toggle_fullscreen();
@@ -77,4 +78,6 @@ class Arbiter : public QObject {
     void volume_changed(uint8_t volume);
     void cursor_changed(bool enabled);
     void action_changed(Action *action, QString key);
+    void now_playing_changed(QString source, QString text, bool active);
+
 };

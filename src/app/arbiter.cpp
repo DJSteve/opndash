@@ -216,6 +216,11 @@ void Arbiter::set_volume(uint8_t volume)
     emit volume_changed(volume);
 }
 
+void Arbiter::set_now_playing(const QString &source, const QString &text, bool active)
+{
+    emit now_playing_changed(source, text, active);
+}
+
 void Arbiter::decrease_volume(uint8_t val)
 {
     this->set_volume(std::min(std::max(0, this->system().volume - val), 100));

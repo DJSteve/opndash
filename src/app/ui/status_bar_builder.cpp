@@ -8,6 +8,7 @@
 
 #include "app/window.hpp" // Dash
 #include "app/arbiter.hpp"
+#include "app/widgets/now_playing_widget.hpp"
 
 namespace Ui {
 
@@ -22,29 +23,37 @@ QWidget *build_status_bar(Dash *dash)
     layout->setContentsMargins(10, 6, 10, 6);
     layout->setSpacing(10);
 
-    auto title = new QLabel("---", widget);
-    title->setObjectName("StatusTitle");
+    // Now Playing (fills the empty space)
+    auto np = new NowPlayingWidget(widget);
+    np->setSourceTag("—");
+    np->setNowPlaying(""); // shows "No media" via your widget logic
+    layout->addWidget(np, 1);
 
+    // Clock (right side)
     auto clock = new QLabel("--:--", widget);
     clock->setObjectName("StatusClock");
     clock->setAlignment(Qt::AlignVCenter | Qt::AlignRight);
-
-    layout->addWidget(title);
-    layout->addStretch(1);
     layout->addWidget(clock);
+
+    // Wire arbiter -> now playing widget
+    auto &arb = dash->get_arbiter();
+    QObject::connect(&arb, &Arbiter::now_playing_changed, widget,
+        [np](const QString &src, const QString &text, bool active){
+            np->setSourceTag(src);
+            np->setNowPlaying(text);
+            np->setActive(active);
+        });
 
     // update clock once per second
     auto timer = new QTimer(widget);
     timer->setInterval(1000);
-
     QObject::connect(timer, &QTimer::timeout, widget, [clock]{
-    	clock->setText(QDateTime::currentDateTime().toString("HH:mm"));
+        clock->setText(QDateTime::currentDateTime().toString("HH:mm"));
     });
     timer->start();
 
     // run immediately
     clock->setText(QDateTime::currentDateTime().toString("HH:mm"));
-
 
     return widget;
 }
