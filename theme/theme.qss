@@ -192,3 +192,55 @@ QPushButton#ControlBluetooth[bt_state="scanning"][bt_pulse="1"] {
     color: rgba(230,220,255,210);
 }
 
+/* =========================
+   Local Media (car-style)
+   ========================= */
+
+#LocalNowPlaying {
+    border-radius: 16px;
+    background: rgba(0, 0, 0, 90);
+    border: 1px solid rgba(180, 120, 255, 55);
+}
+
+#LocalNowPlayingTag {
+    color: rgba(90, 230, 255, 230);   /* cyan */
+    font-weight: 800;
+    letter-spacing: 2px;
+    font-size: 12px;
+}
+
+#LocalNowPlayingTitle {
+    color: rgba(240, 230, 255, 230);
+    font-weight: 800;
+    font-size: 22px;
+}
+
+#LocalNowPlayingArtist {
+    color: rgba(210, 190, 255, 210);
+    font-weight: 600;
+    font-size: 16px;
+}
+
+#LocalNowPlayingAlbum {
+    color: rgba(180, 160, 230, 190);
+    font-weight: 500;
+    font-size: 14px;
+}
+
+#LocalTrackList {
+    background: rgba(0, 0, 0, 40);
+    border-radius: 14px;
+    border: 1px solid rgba(180, 120, 255, 35);
+    padding: 6px;
+}
+
+#LocalTrackList::item {
+    padding: 10px 10px;
+    border-radius: 10px;
+    color: rgba(230, 220, 255, 210);
+}
+
+#LocalTrackList::item:selected {
+    background: rgba(90, 230, 255, 35);
+    color: rgba(255, 255, 255, 235);
+}

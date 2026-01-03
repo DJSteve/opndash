@@ -178,79 +178,115 @@ LocalPlayerTab::LocalPlayerTab(Arbiter &arbiter, QWidget *parent)
 
 QWidget *LocalPlayerTab::playlist_widget()
 {
-    QWidget *widget = new QWidget(this);
-    QHBoxLayout *layout = new QHBoxLayout(widget);
+    auto player = this->player;
+    auto config = this->config;
 
-    QString root_path(config->get_media_home());
+    QWidget *widget = new QWidget;
+    auto layout = new QVBoxLayout(widget);
+    layout->setContentsMargins(0, 0, 0, 0);
+    layout->setSpacing(10);
 
-    QPushButton *home_button = new QPushButton(widget);
-    home_button->setFlat(true);
-    home_button->setCheckable(true);
-    home_button->setChecked(this->config->get_media_home() == root_path);
-    this->arbiter.forge().iconize("playlist_add", "playlist_add_check", home_button, 32);
-    connect(home_button, &QPushButton::clicked, [this](bool checked = false) {
-        this->config->set_media_home(checked ? this->path_label->text() : QDir().absolutePath());
-    });
-    layout->addWidget(home_button, 0, Qt::AlignTop);
+    // --- NOW PLAYING (top card) ---
+    QFrame *now = new QFrame;
+    now->setObjectName("LocalNowPlaying");
+    auto nowLayout = new QVBoxLayout(now);
+    nowLayout->setContentsMargins(14, 12, 14, 12);
+    nowLayout->setSpacing(4);
 
-    QListWidget *folders = new QListWidget(widget);
-    Session::Forge::to_touch_scroller(folders);
-    this->populate_dirs(root_path, folders);
-    layout->addWidget(folders, 1);
+    QLabel *npTag = new QLabel("LOCAL");
+    npTag->setObjectName("LocalNowPlayingTag");
 
-    QListWidget *tracks = new QListWidget(widget);
-    Session::Forge::to_touch_scroller(tracks);
+    QLabel *npTitle = new QLabel("Nothing playing");
+    npTitle->setObjectName("LocalNowPlayingTitle");
+    npTitle->setWordWrap(true);
+
+    QLabel *npArtist = new QLabel("");
+    npArtist->setObjectName("LocalNowPlayingArtist");
+    npArtist->setWordWrap(true);
+
+    QLabel *npAlbum = new QLabel("");
+    npAlbum->setObjectName("LocalNowPlayingAlbum");
+    npAlbum->setWordWrap(true);
+
+    nowLayout->addWidget(npTag);
+    nowLayout->addWidget(npTitle);
+    nowLayout->addWidget(npArtist);
+    nowLayout->addWidget(npAlbum);
+
+    layout->addWidget(now);
+
+    // --- TRACK LIST (single folder) ---
+    QListWidget *tracks = new QListWidget;
+    tracks->setObjectName("LocalTrackList");
+    tracks->setSelectionMode(QAbstractItemView::SingleSelection);
+
+    layout->addWidget(tracks, 1);
+
+    // Load tracks from ONE folder only
+    const QString root_path = config->get_media_home();
+    tracks->clear();
+    player->playlist()->clear();
     this->populate_tracks(root_path, tracks);
-    connect(tracks, &QListWidget::itemClicked, [tracks, player = this->player](QListWidgetItem *item) {
-        player->playlist()->setCurrentIndex(tracks->row(item));
-        player->play();
+
+    // When user taps a track, play it
+    QObject::connect(tracks, &QListWidget::currentRowChanged, this,
+    [this, player, tracks, npTitle, npArtist](int i) {
+        if (i < 0)
+            return;
+
+        player->playlist()->setCurrentIndex(i);
+
+        // pull metadata back out of the list item
+        auto *item = tracks->item(i);
+        const QString artist = item ? item->data(Qt::UserRole + 1).toString() : QString();
+        const QString song   = item ? item->data(Qt::UserRole + 2).toString() : QString();
+        const QString disp   = item ? item->text() : QString();
+
+        // update the on-page “Now Playing” card
+        npTitle->setText(!song.isEmpty() ? song : disp);
+        npArtist->setText(!artist.isEmpty() ? artist : QStringLiteral("Local"));
+
+        // keep the statusbar Now Playing alive for Local too
+        this->arbiter.set_now_playing(QStringLiteral("LOCAL"), disp);
     });
-    connect(this->player->playlist(), &QMediaPlaylist::currentIndexChanged, [this, tracks](int idx) {
-        if (idx < 0) return;
-        tracks->setCurrentRow(idx);
-	// Build "Artist — Title" from the current file if possible, else filename
-        const auto media = this->player->playlist()->currentMedia();
-        const QString path = media.canonicalUrl().toLocalFile();
-        QString np;
 
-        if (!path.isEmpty()) {
-            TagLib::FileRef f(path.toStdString().c_str());
-            if (!f.isNull() && f.tag()) {
-                TagLib::Tag *tag = f.tag();
-                const QString artist = QString::fromStdString(tag->artist().to8Bit(true));
-                const QString title  = QString::fromStdString(tag->title().to8Bit(true));
 
-                if (!artist.isEmpty() && !title.isEmpty())
-                    np = artist + " — " + title;
-                else if (!title.isEmpty())
-                    np = title;
-            }
-
-            if (np.isEmpty()) {
-                QFileInfo fi(path);
-                np = fi.completeBaseName();
-            }
+    // Keep Now Playing card updated as playback index changes
+    auto updateNowPlayingFromIndex = [=](int idx) {
+        if (idx < 0 || idx >= tracks->count()) {
+            npTitle->setText("Nothing playing");
+            npArtist->setText("");
+            npAlbum->setText("");
+            return;
         }
 
-        this->arbiter.set_now_playing("LOCAL", np, !np.isEmpty());
+        QListWidgetItem *it = tracks->item(idx);
 
-    });
-    connect(folders, &QListWidget::itemClicked, [this, folders, tracks, home_button](QListWidgetItem *item) {
-        if (!item->isSelected()) return;
+        // We’ll fill these roles in Step 2 (metadata)
+        const QString title  = it->data(Qt::UserRole + 1).toString();
+        const QString artist = it->data(Qt::UserRole + 2).toString();
+        const QString album  = it->data(Qt::UserRole + 3).toString();
 
-        tracks->clear();
-        this->player->playlist()->clear();
-        QString current_path(item->data(Qt::UserRole).toString());
-        this->path_label->setText(current_path);
-        this->populate_tracks(current_path, tracks);
-        this->populate_dirs(current_path, folders);
+        // Fallbacks if not set yet
+        npTitle->setText(title.isEmpty() ? it->text() : title);
+        npArtist->setText(artist);
+        npAlbum->setText(album);
+    };
 
-        home_button->setChecked(this->config->get_media_home() == current_path);
-    });
-    layout->addWidget(tracks, 2);
+    QObject::connect(player->playlist(), &QMediaPlaylist::currentIndexChanged,
+                     widget, [=](int idx) {
+                         updateNowPlayingFromIndex(idx);
+                         if (idx >= 0 && idx < tracks->count()) {
+                             tracks->setCurrentRow(idx);
+                         }
+                     });
+
+    // Initialise card once at boot
+    updateNowPlayingFromIndex(player->playlist()->currentIndex());
 
     return widget;
 }
+
 
 QWidget *LocalPlayerTab::seek_widget()
 {
@@ -358,17 +394,78 @@ void LocalPlayerTab::populate_dirs(QString path, QListWidget *dirs_widget)
 
 void LocalPlayerTab::populate_tracks(QString path, QListWidget *tracks_widget)
 {
-    QStringList tracks = QDir(path).entryList(QStringList() << "*.mp3", QDir::Files | QDir::Readable);
-    for (QString track : tracks) {
-        if (this->player->playlist()->addMedia(QMediaContent(QUrl::fromLocalFile(path + '/' + track)))) {
-            TagLib::FileRef f(std::string(path.toStdString() + "/" + track.toStdString()).c_str());
-            if (!f.isNull() && f.tag()) {
-                TagLib::Tag *tag = f.tag();
-                tag->title();
-            }
-            int lastPoint = track.lastIndexOf(".");
-            QString fileNameNoExt = track.left(lastPoint);
-            new QListWidgetItem(fileNameNoExt, tracks_widget);
+    if (!tracks_widget)
+        return;
+
+    tracks_widget->clear();
+
+    auto *pl = this->player->playlist();
+    if (pl)
+        pl->clear();
+
+    // common audio extensions (add/remove as you like)
+    const QStringList exts = {"mp3", "flac", "wav", "ogg", "m4a", "aac", "opus"};
+
+    // helper to convert TagLib strings safely
+    auto tl = [](const TagLib::String &s) -> QString {
+        const char *c = s.toCString(true);
+        return (c && *c) ? QString::fromUtf8(c) : QString();
+    };
+
+    struct TrackInfo {
+        QString display;
+        QString artist;
+        QString title;
+        QString file;
+    };
+
+    QVector<TrackInfo> tracks;
+
+    // recursive scan
+    QDirIterator it(path, QDir::Files, QDirIterator::Subdirectories);
+    while (it.hasNext()) {
+        const QString file = it.next();
+        const QFileInfo fi(file);
+
+        const QString ext = fi.suffix().toLower();
+        if (!exts.contains(ext))
+            continue;
+
+        QString artist, title;
+
+        TagLib::FileRef ref(file.toUtf8().constData());
+        if (!ref.isNull() && ref.tag()) {
+            artist = tl(ref.tag()->artist());
+            title  = tl(ref.tag()->title());
         }
+
+        QString display;
+        if (!artist.isEmpty() && !title.isEmpty())
+            display = artist + " — " + title;
+        else if (!title.isEmpty())
+            display = title;
+        else
+            display = fi.completeBaseName();
+
+        tracks.push_back({display, artist, title, file});
+    }
+
+    // stable sort by display text
+    std::sort(tracks.begin(), tracks.end(), [](const TrackInfo &a, const TrackInfo &b) {
+        return a.display.toLower() < b.display.toLower();
+    });
+
+    // build playlist + list (indexes match)
+    for (const auto &t : tracks) {
+        if (pl)
+            pl->addMedia(QUrl::fromLocalFile(t.file));
+
+        auto *item = new QListWidgetItem(t.display);
+        item->setData(Qt::UserRole + 1, t.artist);
+        item->setData(Qt::UserRole + 2, t.title);
+        item->setData(Qt::UserRole + 3, t.file);
+        tracks_widget->addItem(item);
     }
 }
+
+
