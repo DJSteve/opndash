@@ -194,19 +194,46 @@ static QString first_mount_under(const QString &root)
     return QString();
 }
 
+static bool has_media_files(const QString &root)
+{
+    static const QStringList exts = {"mp3","flac","wav","ogg","m4a","aac","opus"};
+    QDirIterator it(root, QDir::Files, QDirIterator::Subdirectories);
+
+    int checked = 0;
+    while (it.hasNext() && checked < 2000) {        // cap so it stays fast
+        const QString file = it.next();
+        const QString ext = QFileInfo(file).suffix().toLower();
+        if (exts.contains(ext)) return true;
+        checked++;
+    }
+    return false;
+}
+
 static QString find_usb_root()
 {
     QDir d("/media");
-    if (d.exists()) {
-        // Prefer our automount naming: /media/usb-sda1, /media/usb-sdb1, etc.
-        QFileInfoList dirs = d.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
-        for (const auto &fi : dirs) {
-            if (fi.isDir() && fi.fileName().startsWith("usb-"))
-                return fi.absoluteFilePath();
-        }
+    if (!d.exists()) return QString();
+
+    // Prefer sdb* first (your primary music stick)
+    QFileInfoList dirs = d.entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+
+    for (const auto &fi : dirs) {
+        if (!fi.isDir()) continue;
+        const QString n = fi.fileName();
+        if (n.startsWith("usb-sdb"))
+            return fi.absoluteFilePath();
     }
+
+    // Otherwise fall back to any usb-sdX*
+    for (const auto &fi : dirs) {
+        if (!fi.isDir()) continue;
+        if (fi.fileName().startsWith("usb-sd"))
+            return fi.absoluteFilePath();
+    }
+
     return QString();
 }
+
 
 QWidget *LocalPlayerTab::playlist_widget()
 {
